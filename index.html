@@ -37,7 +37,7 @@
   --sec:120px;         /* one gap between every top-level section */
   --hair:#EDEDED;      /* separator rule */
 
-  --fs-h1:42px;
+  --fs-h1:clamp(28px, 2.667vw + 17.6px, 56px);
   --fs-lead:21px;
   --fs-sub:20px;
   --fs-h2:26px;
@@ -98,7 +98,7 @@ a{color:inherit}
 .nav .chip{grid-column:3;justify-self:end;margin-right:var(--nav-r)}
 
 /* ── hero ─────────────────────────────────────────────────────────── */
-.hero{text-align:center;padding:320px 20px 0}
+.hero{text-align:center;padding:380px 20px 0}
 /* ── waitlist modal ───────────────────────────────────────────────── */
 [hidden]{display:none!important}
 .modal{
@@ -157,8 +157,9 @@ a{color:inherit}
 }
 .tagline{margin:16px 0 0;font-size:var(--fs-lead);font-style:italic;line-height:1.2}
 h1{
-  margin:23px auto 0;max-width:880px;
-  font-size:var(--fs-h1);font-weight:400;line-height:1.12;letter-spacing:-.0331em;
+  margin:23px auto 0;max-width:1100px;
+  font-size:var(--fs-h1);font-weight:400;line-height:1.1;letter-spacing:-.02em;
+  text-wrap:balance;
 }
 .sub{margin:21px auto 0;max-width:860px;font-size:var(--fs-sub);font-weight:400;line-height:1.2;letter-spacing:-.011em}
 .hero .chip{margin-top:39px}
@@ -346,20 +347,20 @@ html.js .fade.in{opacity:1;transform:none}
 @media (max-width:1330px){.model-row{grid-template-columns:repeat(4,auto)}}
 @media (max-width:1200px){
   :root{--gut:32px;--media-gut:24px;--radius-media:28px;--text-in:0px;--nav-l:32px;--nav-r:32px}
-  .hero{padding-top:140px}
+  .hero{padding-top:180px}
   .photo img{height:auto;aspect-ratio:1363/710}
 }
 /* below 768 the nav is logo + button only */
 @media (max-width:767px){.navlinks{display:none}}
 @media (max-width:900px){
   :root{
-    --fs-h1:36px;--fs-lead:19px;--fs-h2:24px;--fs-body:21px;--lh-body:28px;
+    --fs-lead:19px;--fs-h2:24px;--fs-body:21px;--lh-body:28px;
     --fs-card-title:22px;--fs-card-body:18px;--fs-nav:17px;--fs-mono:15px;
     --fs-sub:17px;--fs-band:15px;
     --sec:72px;
   }
   .brand span{font-size:24px}
-  .hero{padding-top:90px}
+  .hero{padding-top:120px}
   .cards{grid-template-columns:1fr;gap:16px}
   .card p{margin-top:20px}
   .s-solve{margin-top:64px}
@@ -368,12 +369,12 @@ html.js .fade.in{opacity:1;transform:none}
 }
 @media (max-width:640px){
   :root{
-    --fs-h1:28px;--fs-lead:17px;--fs-sub:16px;--fs-band:14px;--fs-h2:20px;
+    --fs-lead:17px;--fs-sub:16px;--fs-band:14px;--fs-h2:20px;
     --fs-body:15px;--lh-body:22px;--fs-card-title:18px;--fs-card-body:15px;--fs-nav:16px;
     --gut:20px;--media-gut:16px;--radius-media:20px;--nav-l:20px;--nav-r:20px;
     --sec:48px;
   }
-  .hero{padding-top:64px}
+  .hero{padding-top:84px}
   .s-building .chip{font-size:18px}
   .band{padding:20px var(--gut);gap:16px}
   .engines{gap:16px}
