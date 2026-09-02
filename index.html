@@ -15,15 +15,17 @@
 /* ── tokens ─────────────────────────────────────────────────────────────
    Values taken from knot-landing.svg (1440 x 4459 artboard).            */
 :root{
-  --ink:#000;
+  --bg:#FCFCFA;        /* page ground, a hair warm of white */
+  --bg-alt:#F5F4F1;    /* tinted sections */
+  --ink:#141414;       /* headings and emphasis */
+  --body:#4A4A4A;      /* body copy */
   --grey-nav:#5D5D5D;
   --grey-card:#898989;
   --grey-italic:#818181;
   --grey-foot:#8D8D8D;
   --grey-link:#474747;
   --grey-privacy:#5B5B5B;
-  --card-line:#D7D7D7;
-  --chip:#D9D9D9;
+  --card-line:#E5E3DE;
   --shadow:0 4px 4px rgba(0,0,0,.25);
 
   --col:1310px;        /* card row: x 65 → 1375 on a 1440 artboard */
@@ -37,7 +39,7 @@
   --radius-media:44px;
 
   --sec:96px;          /* one gap between every top-level section */
-  --hair:#EDEDED;      /* separator rule */
+  --hair:#ECEAE5;      /* separator rule */
 
   --fs-h1:clamp(28px, 2.667vw + 17.6px, 40px);
   --fs-lead:17px;
@@ -56,8 +58,8 @@
 html{-webkit-text-size-adjust:100%}
 body{
   margin:0;
-  background:#fff;
-  color:var(--ink);
+  background:var(--bg);
+  color:var(--body);
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-size:16px;
   line-height:1.35;
@@ -82,7 +84,7 @@ a{color:inherit}
 .brand{display:flex;align-items:center;gap:14px;text-decoration:none}
 .nav .brand{justify-self:start;margin-left:var(--nav-l);min-width:0}
 .brand img{width:40px;height:40px}
-.brand span{font-size:27px;font-weight:700;letter-spacing:-.037em}
+.brand span{font-size:27px;font-weight:700;letter-spacing:-.037em;color:var(--ink)}
 .navlinks{display:flex;flex:none;gap:74.5px;justify-self:center;list-style:none;padding:0;margin:0}
 .navlinks a{color:var(--grey-nav);text-decoration:none;font-size:var(--fs-nav);white-space:nowrap}
 .navlinks a:hover{color:var(--ink)}
@@ -110,7 +112,7 @@ a{color:inherit}
 .modal::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.55)}
 .modal-panel{
   position:relative;width:100%;max-width:440px;max-height:90vh;overflow:auto;
-  background:#fff;border-radius:16px;padding:36px 36px 32px;
+  background:var(--bg);border-radius:16px;padding:36px 36px 32px;
   box-shadow:0 12px 40px rgba(0,0,0,.28);
 }
 .modal-x{
@@ -118,7 +120,7 @@ a{color:inherit}
   border:0;border-radius:50%;background:none;color:var(--grey-nav);
   font-size:22px;line-height:1;cursor:pointer;
 }
-.modal-x:hover{background:rgba(217,217,217,.5);color:var(--ink)}
+.modal-x:hover{background:var(--bg-alt);color:var(--ink)}
 .modal h2{font-size:22px}
 .modal p{margin:10px 0 0;font-size:16px;line-height:1.45;color:var(--grey-card)}
 .choice{display:grid;gap:12px;margin-top:24px}
@@ -156,11 +158,12 @@ a{color:inherit}
 
 .eyebrow{
   margin:0;font-size:16px;font-weight:600;letter-spacing:-.017em;line-height:1.2;
+  color:var(--ink);
 }
-.tagline{margin:16px 0 0;font-size:var(--fs-lead);font-style:italic;line-height:1.2}
+.tagline{margin:16px 0 0;font-size:var(--fs-lead);font-style:italic;line-height:1.2;color:var(--ink)}
 h1{
   margin:23px auto 0;max-width:1100px;
-  font-size:var(--fs-h1);font-weight:400;line-height:1.1;letter-spacing:-.02em;
+  font-size:var(--fs-h1);font-weight:400;line-height:1.1;letter-spacing:-.02em;color:var(--ink);
   text-wrap:balance;
 }
 .sub{margin:21px auto 0;max-width:860px;font-size:var(--fs-sub);font-weight:400;line-height:1.2;letter-spacing:-.011em}
@@ -173,12 +176,12 @@ h1{
 .reel video{
   width:100%;aspect-ratio:16/9;height:auto;
   border-radius:var(--radius-media);
-  background:#f1f1f1;object-fit:cover;
+  background:#F0EEE9;object-fit:cover;
 }
 .reel figcaption{margin-top:31px;text-align:center}
 .cap-title{
   display:block;
-  font-size:var(--fs-lead);font-weight:600;letter-spacing:-.043em;line-height:1.2;
+  font-size:var(--fs-lead);font-weight:600;letter-spacing:-.043em;line-height:1.2;color:var(--ink);
 }
 /* inline flow, so a narrow viewport wraps the strip onto a second line
    instead of shrinking it */
@@ -192,7 +195,7 @@ h1{
 
 /* ── engines band ─────────────────────────────────────────────────── */
 .band{
-  background:rgba(217,217,217,.24);
+  background:var(--bg-alt);
   min-height:112px;
   display:flex;align-items:center;justify-content:space-between;gap:32px;
   padding:18px 45px 14px 42px;
@@ -205,11 +208,12 @@ h1{
 
 /* ── prose sections ───────────────────────────────────────────────── */
 .prose{padding-left:var(--text-in);padding-right:var(--text-in)}
-h2{margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.2;letter-spacing:-.006em}
+h2{margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.2;letter-spacing:-.006em;color:var(--ink)}
 .prose p{
   margin:0;font-size:var(--fs-body);font-weight:400;line-height:var(--lh-body);
 }
 .prose p+p{margin-top:var(--lh-body)}
+.prose strong{color:var(--ink)}
 .p-wide{max-width:960px}
 .p-narrow{max-width:830px}
 
@@ -225,10 +229,16 @@ h2{margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.2;letter-spacin
   border:1px solid var(--card-line);border-radius:10px;box-shadow:var(--shadow);
   padding:40px 27px 41px;background:#fff;
 }
-.card h3{margin:0;font-size:var(--fs-card-title);font-weight:700;line-height:1.2;letter-spacing:-.006em}
+.card h3{margin:0;font-size:var(--fs-card-title);font-weight:700;line-height:1.2;letter-spacing:-.006em;color:var(--ink)}
 .card p{margin:30px 0 0;font-size:var(--fs-card-body);line-height:25px;color:var(--grey-card)}
 
-.s-building{margin-top:73px}
+/* warm panel. Horizontal padding is --text-in so the copy keeps the
+   same left edge as the untinted prose above it, with a floor so the
+   text never touches the tint edge once --text-in drops to 0. */
+.s-building{
+  margin-top:73px;background:var(--bg-alt);border-radius:16px;
+  padding:40px max(var(--text-in), 22px) 44px;
+}
 .s-building p{margin-top:38px}
 .s-building .chip{margin-top:29px;font-size:25px}
 
@@ -265,7 +275,7 @@ h2{margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.2;letter-spacin
 .signup{display:flex;gap:14px;margin-top:25px;margin-left:4px;flex-wrap:wrap}
 .signup input{
   width:202px;height:49px;padding:0 21px 6px;line-height:1;
-  border:0;border-radius:5px;background:rgba(217,217,217,.49);
+  border:0;border-radius:5px;background:#EFEDE8;
   font:inherit;font-size:16px;color:var(--ink);
 }
 .signup input::placeholder{color:var(--ink);opacity:1}
@@ -325,12 +335,12 @@ html.js .fade.in{opacity:1;transform:none}
 .signup button,.wl-submit{transition:background-color .15s ease,transform .15s ease}
 .signup button:hover,.wl-submit:hover{transform:translateY(-1px)}
 .card{transition:border-color .15s ease}
-.card:hover{border-color:#C0C0C0}
+.card:hover{border-color:#D5D2CB}
 .foot-cols a,.wl-back,.modal-x{transition:color .15s ease,background-color .15s ease}
 /* :where() keeps this at zero specificity, so the inset outline on the
    modal inputs still wins */
 :where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-::selection{background:#E3E3E3;color:var(--ink)}
+::selection{background:#EAE7E1;color:var(--ink)}
 
 /* ── touch targets ──────────────────────────────────────────────── */
 /* .chip is 45px from its padding alone; these are the ones that fall
