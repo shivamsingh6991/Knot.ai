@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knot.ai — Inference for the next generation of AI agents</title>
+<meta name="description" content="Open models on Indian infrastructure. Built for workloads that run for hours, not seconds.">
+<link rel="icon" href="knot-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── tokens ─────────────────────────────────────────────────────────────
+   Values taken from knot-landing.svg (1440 x 4459 artboard).            */
+:root{
+  --ink:#000;
+  --grey-nav:#5D5D5D;
+  --grey-card:#898989;
+  --grey-italic:#818181;
+  --grey-foot:#8D8D8D;
+  --grey-link:#474747;
+  --grey-privacy:#5B5B5B;
+  --card-line:#D7D7D7;
+  --chip:#D9D9D9;
+  --shadow:0 4px 4px rgba(0,0,0,.25);
+
+  --col:1310px;        /* card row: x 65 → 1375 on a 1440 artboard */
+  --gut:65px;          /* page gutter */
+  --nav-l:77px;        /* nav side insets (logo left / button right) */
+  --nav-r:83px;
+  --text-in:25px;      /* body copy sits 25px inside the card column (x 90) */
+  --media-gut:38px;    /* video + photo gutter */
+  --radius-media:44px;
+
+  --sec:120px;         /* one gap between every top-level section */
+  --hair:#EDEDED;      /* separator rule */
+
+  --fs-h1:42px;
+  --fs-lead:21px;
+  --fs-sub:20px;
+  --fs-h2:26px;
+  --fs-body:25px;
+  --lh-body:31px;
+  --fs-card-title:26px;
+  --fs-card-body:20px;
+  --fs-nav:20px;
+  --fs-mono:15px;
+  --fs-band:16px;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:#fff;
+  color:var(--ink);
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;
+  line-height:1.35;
+  -webkit-font-smoothing:antialiased;
+}
+img,video{display:block;max-width:100%}
+a{color:inherit}
+
+/* shared column */
+.col{max-width:var(--col);margin-inline:auto;padding-inline:20px}
+@media (min-width:1440px){.col{padding-inline:0}}
+
+/* ── nav ──────────────────────────────────────────────────────────── */
+/* three columns: logo | centred links | button.
+   The 1fr side tracks are equal, so the middle track is centred on the
+   viewport regardless of how wide the logo or the button are. */
+.nav{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  padding:25px 0 0;
+  height:65px;
+}
+.brand{display:flex;align-items:center;gap:14px;text-decoration:none}
+.nav .brand{justify-self:start;margin-left:var(--nav-l);min-width:0}
+.brand img{width:40px;height:40px}
+.brand span{font-size:27px;font-weight:700;letter-spacing:-.037em}
+.navlinks{display:flex;flex:none;gap:74.5px;justify-self:center;list-style:none;padding:0;margin:0}
+.navlinks a{color:var(--grey-nav);text-decoration:none;font-size:var(--fs-nav);white-space:nowrap}
+.navlinks a:hover{color:var(--ink)}
+
+.chip{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--chip);color:var(--ink);
+  border:0;border-radius:12px;box-shadow:var(--shadow);
+  font:inherit;font-size:var(--fs-nav);
+  text-decoration:none;white-space:nowrap;cursor:pointer;
+}
+.chip:hover{background:#cfcfcf}
+.nav .chip{grid-column:3;justify-self:end;margin-right:var(--nav-r);width:139px;height:40px;font-weight:600}
+
+/* ── hero ─────────────────────────────────────────────────────────── */
+.hero{text-align:center;padding:320px 20px 0}
+/* ── waitlist modal ───────────────────────────────────────────────── */
+[hidden]{display:none!important}
+.modal{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.modal-panel{
+  position:relative;width:100%;max-width:440px;max-height:90vh;overflow:auto;
+  background:#fff;border-radius:16px;padding:36px 36px 32px;
+  box-shadow:0 12px 40px rgba(0,0,0,.28);
+}
+.modal-x{
+  position:absolute;top:12px;right:12px;width:32px;height:32px;
+  border:0;border-radius:50%;background:none;color:var(--grey-nav);
+  font-size:22px;line-height:1;cursor:pointer;
+}
+.modal-x:hover{background:rgba(217,217,217,.5);color:var(--ink)}
+.modal h2{font-size:22px}
+.modal p{margin:10px 0 0;font-size:16px;line-height:1.45;color:var(--grey-card)}
+.choice{display:grid;gap:12px;margin-top:24px}
+.choice .chip{width:100%;height:48px;font-size:18px;font-weight:600}
+.wl-form{display:grid;gap:12px}
+.wl-form input{
+  height:48px;padding:0 16px;font:inherit;font-size:16px;color:var(--ink);
+  background:#fff;border:1px solid var(--card-line);border-radius:8px;
+}
+.wl-form input::placeholder{color:var(--grey-foot)}
+.wl-form input:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.wl-actions{display:flex;align-items:center;gap:8px;margin-top:6px}
+.wl-submit{
+  flex:1;height:46px;border:1px solid var(--ink);border-radius:8px;
+  background:var(--ink);color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer;
+}
+.wl-submit:hover{background:#222}
+.wl-submit[disabled]{opacity:.6;cursor:default}
+.wl-back{
+  border:0;background:none;font:inherit;font-size:16px;
+  color:var(--grey-nav);cursor:pointer;padding:8px 10px;
+}
+.wl-back:hover{color:var(--ink)}
+.wl-err{color:#B00020!important;font-size:14px!important;margin-top:4px!important}
+.wl-hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}
+@media (max-width:640px){
+  .modal-panel{padding:28px 22px 24px}
+  .modal h2{font-size:20px}
+}
+
+/* ── hero particle field ──────────────────────────────────────────── */
+.hero{position:relative;isolation:isolate}
+#dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero>*:not(canvas){position:relative;z-index:1}
+
+.eyebrow{
+  margin:0;font-size:16px;font-weight:600;letter-spacing:-.017em;line-height:1.2;
+}
+.tagline{margin:16px 0 0;font-size:var(--fs-lead);font-style:italic;line-height:1.2}
+h1{
+  margin:23px auto 0;max-width:880px;
+  font-size:var(--fs-h1);font-weight:400;line-height:1.12;letter-spacing:-.0331em;
+}
+.sub{margin:21px auto 0;max-width:860px;font-size:var(--fs-sub);font-weight:400;line-height:1.2;letter-spacing:-.011em}
+.hero .chip{margin-top:39px;width:175px;height:40px}
+
+/* ── hero video ───────────────────────────────────────────────────── */
+/* 1200px cap, centred; below ~1300 it goes percentage-based so the
+   frame keeps side margins and never touches the viewport edge. */
+.reel{width:92%;max-width:1200px;margin:80px auto 0}
+.reel video{
+  width:100%;aspect-ratio:16/9;height:auto;
+  border-radius:var(--radius-media);
+  background:#f1f1f1;object-fit:cover;
+}
+.reel figcaption{margin-top:31px;text-align:center}
+.cap-title{
+  display:block;
+  font-size:var(--fs-lead);font-weight:600;letter-spacing:-.043em;line-height:1.2;
+}
+/* inline flow, so a narrow viewport wraps the strip onto a second line
+   instead of shrinking it */
+.cap-strip{
+  display:block;margin-top:8px;
+  font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:12px;letter-spacing:.04em;line-height:1.7;color:var(--grey-nav);
+}
+.cap-strip span{white-space:nowrap}
+.cap-strip .dot{color:var(--grey-card);padding:0 4px}
+
+/* ── engines band ─────────────────────────────────────────────────── */
+.band{
+  background:rgba(217,217,217,.24);
+  min-height:112px;
+  display:flex;align-items:center;justify-content:space-between;gap:32px;
+  padding:18px 45px 14px 42px;
+  flex-wrap:wrap;
+}
+.band p{margin:0;font-size:var(--fs-band);line-height:1.3;letter-spacing:-.006em}
+.engines{display:flex;align-items:baseline;gap:27px;flex-wrap:wrap}
+.engines .lbl{font-size:var(--fs-band)}
+.engines .eng{font-size:var(--fs-nav)}
+
+/* ── prose sections ───────────────────────────────────────────────── */
+.prose{padding-left:var(--text-in);padding-right:var(--text-in)}
+h2{position:relative;margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.2;letter-spacing:-.006em}
+.prose p{
+  margin:0;font-size:var(--fs-body);font-weight:400;line-height:var(--lh-body);
+}
+.prose p+p{margin-top:var(--lh-body)}
+.p-wide{max-width:960px}
+.p-narrow{max-width:830px}
+
+.s-problem p{margin-top:20px}
+.s-solve{margin-top:69px}
+
+/* ── cards ────────────────────────────────────────────────────────── */
+.cards{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:17px;
+  margin-top:47px;
+}
+.card{
+  border:1px solid var(--card-line);border-radius:10px;box-shadow:var(--shadow);
+  padding:40px 27px 41px;background:#fff;
+}
+.card h3{margin:0;font-size:var(--fs-card-title);font-weight:700;line-height:1.2;letter-spacing:-.006em}
+.card p{margin:30px 0 0;font-size:var(--fs-card-body);line-height:25px;color:var(--grey-card)}
+
+.s-building{margin-top:73px}
+.s-building p{margin-top:38px}
+.s-building .chip{margin-top:29px;width:110px;height:41px;border-radius:10px;font-size:25px}
+
+/* ── models ───────────────────────────────────────────────────────── */
+.models{text-align:center}
+.models h2{
+  font-size:var(--fs-h2);font-weight:700;font-style:italic;color:var(--grey-italic);
+}
+/* explicit column count so the wrap is deterministic — flex-wrap left a
+   single orphan on the second row at some widths. */
+.model-row{
+  display:grid;grid-template-columns:repeat(8,auto);justify-content:center;
+  gap:36px 64px;margin-top:109px;padding-inline:20px;
+}
+.model{display:flex;flex-direction:column;align-items:center;gap:8px;margin:0;width:104px}
+/* fixed-height box, centred both ways: every logo optically lands on the
+   same line whatever its aspect ratio, so the names stay on one row. */
+.model .logo{display:flex;align-items:center;justify-content:center;width:100%;height:40px}
+.model img{max-height:40px;max-width:100%;width:auto;height:auto;object-fit:contain}
+.model figcaption{
+  font-size:13px;line-height:1.2;text-align:center;color:var(--grey-nav);
+}
+
+/* ── datacentre photo ─────────────────────────────────────────────── */
+.photo{margin:0 var(--media-gut)}
+.photo img{
+  width:100%;height:710px;object-fit:cover;object-position:center 52%;
+  border-radius:var(--radius-media);
+}
+
+/* ── newsletter ───────────────────────────────────────────────────── */
+.tail{padding:0 12px 16px 21px;max-width:1440px;margin-inline:auto}
+.tail h2{font-size:calc(var(--fs-h2) - 1px);font-weight:600}
+.signup{display:flex;gap:14px;margin-top:25px;margin-left:4px;flex-wrap:wrap}
+.signup input{
+  width:202px;height:49px;padding:0 21px 6px;line-height:1;
+  border:0;border-radius:5px;background:rgba(217,217,217,.49);
+  font:inherit;font-size:16px;color:var(--ink);
+}
+.signup input::placeholder{color:var(--ink);opacity:1}
+.signup button{
+  width:123px;height:46px;align-self:flex-start;margin-top:1px;
+  border:1px solid #000;border-radius:5px;background:#000;color:#fff;
+  font:inherit;font-size:20px;cursor:pointer;
+}
+.signup button:hover{background:#222}
+
+/* ── footer ───────────────────────────────────────────────────────── */
+.foot{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:40px;
+  margin-top:var(--sec);flex-wrap:wrap;
+}
+.foot-cols{display:flex;align-items:flex-end;gap:0;font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.foot-cols ul{list-style:none;margin:0;padding:0}
+.foot-cols li{line-height:20px}
+.foot-cols li+li{margin-top:9px}
+.foot-cols a{
+  color:var(--grey-link);text-decoration:none;font-size:var(--fs-mono);line-height:20px;
+}
+.foot-cols a:hover{text-decoration:underline}
+.foot-brand{padding-top:16px;margin-left:4px}
+.c1{width:112px}
+.c2{width:157px}
+.c3 a{color:var(--grey-privacy)}
+.copyright{
+  margin:8px 0 0 -4px;
+  font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:var(--fs-mono);color:var(--grey-foot);
+}
+
+/* ── section separators ──────────────────────────────────────────── */
+/* an <hr> rather than a pseudo-element: .band is a flex container and
+   .band/.photo carry their own backgrounds, so a ::before would land
+   inside them. Width tracks .col's *content* box, not its border box. */
+.rule{
+  border:0;height:1px;background:var(--hair);
+  width:calc(min(100%, var(--col)) - 40px);
+  margin:calc(var(--sec) / 2) auto;
+}
+@media (min-width:1440px){.rule{width:min(100%, var(--col))}}
+
+/* ── section numbers ──────────────────────────────────────────────── */
+/* hangs in the page gutter, left of the heading text. That gutter only
+   opens up at 1380px (.col is 1310 + 20px padding and fills the viewport
+   below that), so they hide there rather than at the 900px breakpoint. */
+.s-num{
+  position:absolute;right:100%;top:.3em;margin-right:14px;
+  font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;font-weight:400;font-style:normal;line-height:1;
+  letter-spacing:.14em;color:#B0B0B0;
+}
+.models h2{display:inline-block}
+@media (max-width:1379px){.s-num{display:none}}
+
+/* ── scroll fade-ins ──────────────────────────────────────────────── */
+/* .js is set in <head>, so the hidden state never applies without JS.
+   The hero and the video reel are exempt: opacity:0 on a <video>'s
+   container is one of the ways Chrome declines to start muted autoplay. */
+html.js .fade{opacity:0;transform:translateY(20px);transition:opacity .4s ease-out,transform .4s ease-out}
+html.js .fade.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html.js .fade{opacity:1;transform:none;transition:none}
+}
+
+/* ── hover / focus / selection ────────────────────────────────────── */
+.navlinks a{transition:color .15s ease}
+.chip,.signup button,.wl-submit{transition:background-color .15s ease,transform .15s ease}
+.chip:hover,.signup button:hover,.wl-submit:hover{transform:translateY(-1px)}
+.card{transition:border-color .15s ease}
+.card:hover{border-color:#C0C0C0}
+.foot-cols a,.wl-back,.modal-x{transition:color .15s ease,background-color .15s ease}
+/* :where() keeps this at zero specificity, so the inset outline on the
+   modal inputs still wins */
+:where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+::selection{background:#E3E3E3;color:var(--ink)}
+
+/* ── responsive ───────────────────────────────────────────────────── */
+@media (max-width:1300px){.navlinks{gap:32px}}
+/* 8 across needs 1320px; below that, a clean 4+4 rather than an orphan row */
+@media (max-width:1330px){.model-row{grid-template-columns:repeat(4,auto)}}
+@media (max-width:1200px){
+  :root{--gut:32px;--media-gut:24px;--radius-media:28px;--text-in:0px;--nav-l:32px;--nav-r:32px}
+  .hero{padding-top:140px}
+  .photo img{height:auto;aspect-ratio:1363/710}
+}
+@media (max-width:1024px){.navlinks{display:none}}
+@media (max-width:900px){
+  :root{
+    --fs-h1:34px;--fs-lead:19px;--fs-h2:24px;--fs-body:21px;--lh-body:28px;
+    --fs-card-title:22px;--fs-card-body:18px;--fs-nav:17px;--fs-mono:15px;
+    --fs-sub:17px;--fs-band:15px;
+    --sec:72px;
+  }
+  .brand span{font-size:24px}
+  .hero{padding-top:90px}
+  .cards{grid-template-columns:1fr;gap:16px}
+  .card p{margin-top:20px}
+  .s-solve{margin-top:64px}
+  .s-building{margin-top:48px}
+  .model-row{margin-top:48px;gap:28px 40px}
+}
+@media (max-width:640px){
+  :root{--fs-h1:28px;--fs-lead:17px;--fs-sub:16px;--fs-band:14px;--fs-h2:21px;--fs-body:18px;--lh-body:26px;--gut:20px;--media-gut:16px;--radius-media:20px;--nav-l:20px;--nav-r:20px}
+  .nav .chip{width:auto;padding-inline:16px}
+  .hero{padding-top:64px}
+  .hero .chip,.s-building .chip{width:auto;padding-inline:20px}
+  .s-building .chip{font-size:18px}
+  .band{padding:20px var(--gut);gap:16px}
+  .engines{gap:16px}
+  .model-row{gap:22px 16px}
+  .model{width:74px}
+  .model figcaption{font-size:12px}
+  .reel figcaption{margin-top:20px}
+  .signup input{flex:1 1 180px;width:auto}
+  .foot{gap:28px}
+  .foot-cols{gap:0;flex-wrap:wrap}
+  .c1,.c2{width:auto;min-width:110px}
+  .c3{min-width:110px}
+}
+</style>
+<script type="text/javascript">
+(function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if(typeof namespace === "string"){cal.ns[namespace] = cal.ns[namespace] || api;p(cal.ns[namespace], ar);p(cal, ["initNamespace", namespace]);} else p(cal, ar); return;} p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");
+Cal("init", "30min", {origin:"https://cal.com"});
+Cal.ns["30min"]("ui", {"theme":"light","hideEventTypeDetails":false,"layout":"month_view"});
+</script>
+<script>document.documentElement.className+=" js"</script>
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="#top"><img src="knot-logo.png" alt="" width="40" height="40"><span>Knot.ai</span></a>
+  <ul class="navlinks">
+    <li><a href="#inference">Inference</a></li>
+    <li><a href="#models">Models &amp; Pricing</a></li>
+    <li><a href="#about">About Us</a></li>
+    <li><a href="#">Docs</a></li>
+  </ul>
+  <a class="chip" href="https://cal.com/shivam-singh-krvlu4/30min"
+     onclick="if(customElements.get('cal-modal-box'))event.preventDefault()"
+     data-cal-link="shivam-singh-krvlu4/30min"
+     data-cal-namespace="30min"
+     data-cal-config='{"layout":"month_view","theme":"light"}'>Book a call</a>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <canvas id="dust" aria-hidden="true"></canvas>
+    <p class="eyebrow">COMING SOON</p>
+    <p class="tagline">Inference for the agentic era</p>
+    <h1>Inference for the next generation of AI agents.</h1>
+    <p class="sub">Open models on Indian infrastructure. Built for workloads that run for hours, not seconds.</p>
+    <button class="chip" type="button" data-waitlist>Join the waitlist</button>
+  </section>
+
+  <figure class="reel">
+    <video src="hero.mp4" poster="hero-poster.jpg" width="1280" height="720"
+             autoplay muted loop playsinline disablepictureinpicture preload="metadata"></video>
+    <figcaption>
+      <span class="cap-title">Evolution of Technology</span>
+      <span class="cap-strip"><span>Apollo 11</span> <span class="dot" aria-hidden="true">·</span> <span>The chip</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaGo</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaFold</span> <span class="dot" aria-hidden="true">·</span> <span>GPT</span> <span class="dot" aria-hidden="true">·</span> <span>Claude</span> <span class="dot" aria-hidden="true">·</span> <span>Agents</span></span>
+    </figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <section class="band fade">
+    <p>Built on open inference engines. Benchmarks published, methodology open.</p>
+    <div class="engines">
+      <span class="lbl">Built on</span>
+      <span class="eng">vLLM</span>
+      <span class="eng">SGLang</span>
+      <span class="eng">TensorRT-LLM</span>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section id="inference" class="col fade">
+    <div class="prose s-problem">
+      <h2><span class="s-num" aria-hidden="true">01</span>Agents cost more than you think</h2>
+      <p class="p-wide">One chat message is a single model call. One agent task is dozens &mdash; and you pay for
+        every one, in <strong>dollars</strong>, to a provider abroad.</p>
+    </div>
+
+    <div class="prose s-solve">
+      <h2><span class="s-num" aria-hidden="true">02</span>How we solve it</h2>
+    </div>
+
+    <div class="cards">
+      <article class="card">
+        <h3>Priced for patience</h3>
+        <p>Your agent isn't watching a loading spinner. Tell us how long a request can wait and pay accordingly.</p>
+      </article>
+      <article class="card">
+        <h3>Served from India</h3>
+        <p>Indian GPUs, rupee billing. No currency exposure on a cost that grows with every user.</p>
+      </article>
+      <article class="card">
+        <h3>Built for long work</h3>
+        <p>Existing engines assume one question, one answer. Agents pause, resume, and carry hours of context.</p>
+      </article>
+    </div>
+
+    <div class="prose s-building" id="about">
+      <h2><span class="s-num" aria-hidden="true">03</span>We're building, not selling.</h2>
+      <p class="p-narrow">Right now that means benchmarking open models on Indian GPUs and publishing what we find.</p>
+      <p class="p-narrow">If you're running agents in India and paying too much for them, we'd like to talk.
+        <strong>Not to sell you anything &mdash; to understand what actually hurts</strong>.</p>
+      <a class="chip" href="mailto:hello@knotai.cloud">Email us</a>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section id="models" class="models fade">
+    <h2><span class="s-num" aria-hidden="true">04</span>Models we are deploying soon.</h2>
+    <div class="model-row">
+      <figure class="model"><span class="logo"><img src="models/qwen.png" alt="Qwen logo"></span><figcaption>Qwen</figcaption></figure>
+      <figure class="model"><span class="logo"><img src="models/deepseek.png" alt="DeepSeek logo"></span><figcaption>DeepSeek</figcaption></figure>
+      <figure class="model"><span class="logo"><img src="models/llama.png" alt="Llama logo"></span><figcaption>Llama</figcaption></figure>
+      <figure class="model"><span class="logo"><img src="models/mistral.png" alt="Mistral logo"></span><figcaption>Mistral</figcaption></figure>
+      <figure class="model"><span class="logo"><img src="models/glm.png" alt="GLM logo"></span><figcaption>GLM</figcaption></figure>
+      <figure class="model"><span class="logo"><img src="models/kimi.png" alt="Kimi logo"></span><figcaption>Kimi</figcaption></figure>
+      <figure class="model"><span class="logo"><img src="models/gemma.png" alt="Gemma logo"></span><figcaption>Gemma</figcaption></figure>
+      <figure class="model"><span class="logo"><img src="models/gpt-oss.png" alt="OpenAI logo"></span><figcaption>gpt-oss</figcaption></figure>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <figure class="photo fade">
+    <img src="datacentre.jpg" alt="Aerial view of a datacentre campus at dusk" width="2400" height="1797" loading="lazy">
+  </figure>
+
+</main>
+
+<hr class="rule">
+
+<div class="tail fade">
+  <h2>Sign up for 'Notes' by Knot.ai</h2>
+  <form class="signup" onsubmit="event.preventDefault();location.href='mailto:hello@knotai.cloud?subject=Notes%20signup&amp;body='+encodeURIComponent(this.email.value)">
+    <input type="email" name="email" placeholder="name@email.com" aria-label="Email address" required>
+    <button type="submit">Subscribe</button>
+  </form>
+
+  <footer class="foot">
+    <div class="foot-brand">
+      <a class="brand" href="#top"><img src="knot-logo.png" alt="" width="40" height="40"><span>Knot.ai</span></a>
+      <p class="copyright">&copy;2026&nbsp; All right reserved</p>
+    </div>
+    <nav class="foot-cols" aria-label="Footer">
+      <ul class="c1">
+        <li><a href="mailto:hello@knotai.cloud">Contact</a></li>
+        <li><a href="#inference">About</a></li>
+      </ul>
+      <ul class="c2">
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">Linkedin</a></li>
+        <li><a href="#">X/Twitter</a></li>
+      </ul>
+      <ul class="c3">
+        <li><a href="#">Privacy policy</a></li>
+      </ul>
+    </nav>
+  </footer>
+</div>
+
+
+<div class="modal" id="waitlist" hidden>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-label="Join the waitlist">
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+
+    <section data-step="pick">
+      <h2>Join the waitlist</h2>
+      <p>Tell us who you are so we can size the workload right.</p>
+      <div class="choice">
+        <button class="chip" type="button" data-go="personal">Personal</button>
+        <button class="chip" type="button" data-go="enterprise">Enterprise</button>
+      </div>
+    </section>
+
+    <form class="wl-form" data-step="personal" name="waitlist-personal" method="POST"
+          netlify netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="waitlist-personal">
+      <p class="wl-hp"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+      <h2>Personal</h2>
+      <input type="text" name="name" placeholder="Full name" autocomplete="name" required>
+      <input type="email" name="email" placeholder="name@email.com" autocomplete="email" required>
+      <div class="wl-actions">
+        <button class="wl-back" type="button" data-back>&larr; Back</button>
+        <button class="wl-submit" type="submit">Join the waitlist</button>
+      </div>
+      <p class="wl-err" role="alert" hidden></p>
+    </form>
+
+    <form class="wl-form" data-step="enterprise" name="waitlist-enterprise" method="POST"
+          netlify netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="waitlist-enterprise">
+      <p class="wl-hp"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+      <h2>Enterprise</h2>
+      <input type="text" name="name" placeholder="Full name" autocomplete="name" required>
+      <input type="email" name="email" placeholder="Work email" autocomplete="email" required>
+      <input type="text" name="company" placeholder="Company" autocomplete="organization" required>
+      <input type="text" name="role" placeholder="Role" autocomplete="organization-title" required>
+      <div class="wl-actions">
+        <button class="wl-back" type="button" data-back>&larr; Back</button>
+        <button class="wl-submit" type="submit">Join the waitlist</button>
+      </div>
+      <p class="wl-err" role="alert" hidden></p>
+    </form>
+
+    <section data-step="done" hidden>
+      <h2>You&rsquo;re on the list.</h2>
+      <p>Thanks &mdash; we&rsquo;ll be in touch before we open access.</p>
+      <div class="choice">
+        <button class="chip" type="button" data-close>Close</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* Ambient dust field behind the hero copy. Canvas 2D, ~500 particles,
+   cursor repulsion with a spring back to the drift. Desktop only. */
+(function(){
+  var cv=document.getElementById('dust');
+  if(!cv||!cv.getContext) return;
+  var ctx=cv.getContext('2d'), hero=cv.parentNode;
+  var ps=[], w=0, h=0, raf=0, last=0, mx=-1e4, my=-1e4;
+  var R=100, FRAME=1000/60;                       // repel radius, 60fps cap
+  var wide=matchMedia('(min-width:900px)');
+  var still=matchMedia('(prefers-reduced-motion:reduce)');
+
+  function size(){
+    var r=hero.getBoundingClientRect(), dpr=Math.min(devicePixelRatio||1,2);
+    w=r.width; h=r.height;
+    cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var n=Math.max(400,Math.min(600,Math.round(w*h/1500)));
+    ps.length=0;
+    for(var i=0;i<n;i++) ps.push({
+      x:Math.random()*w, y:Math.random()*h,
+      vx:(Math.random()-.5)*.28, vy:(Math.random()-.5)*.28,
+      r:.5+Math.random()*.6,                      // 1.0–2.2px across
+      ox:0, oy:0, ovx:0, ovy:0                    // cursor displacement
+    });
+  }
+
+  function step(now){
+    raf=requestAnimationFrame(step);
+    if(now-last<FRAME-1) return;                  // cap at 60fps
+    last=now;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='rgba(0,0,0,.25)';
+    for(var i=0;i<ps.length;i++){
+      var p=ps[i];
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<-2) p.x=w+2; else if(p.x>w+2) p.x=-2;
+      if(p.y<-2) p.y=h+2; else if(p.y>h+2) p.y=-2;
+      var dx=p.x+p.ox-mx, dy=p.y+p.oy-my, d2=dx*dx+dy*dy;
+      if(d2<R*R){                                 // push away from cursor
+        var d=Math.sqrt(d2)||.001, f=(1-d/R)*.75;
+        p.ovx+=dx/d*f; p.ovy+=dy/d*f;
+      }
+      p.ovx=(p.ovx-p.ox*.012)*.9;                 // spring back, damped
+      p.ovy=(p.ovy-p.oy*.012)*.9;
+      p.ox+=p.ovx; p.oy+=p.ovy;
+      ctx.beginPath();
+      ctx.arc(p.x+p.ox,p.y+p.oy,p.r,0,6.2832);
+      ctx.fill();
+    }
+  }
+
+  function stop(){ if(raf){cancelAnimationFrame(raf);raf=0;} ctx.clearRect(0,0,w,h); }
+  function sync(){
+    if(wide.matches&&!still.matches&&!document.hidden){
+      if(!raf){ size(); last=0; raf=requestAnimationFrame(step); }
+    } else stop();
+  }
+
+  addEventListener('pointermove',function(e){
+    var r=hero.getBoundingClientRect();
+    mx=e.clientX-r.left; my=e.clientY-r.top;
+  },{passive:true});
+  document.addEventListener('mouseleave',function(){ mx=my=-1e4; });
+  addEventListener('resize',function(){ if(raf) size(); },{passive:true});
+  document.addEventListener('visibilitychange',sync);
+  wide.addEventListener('change',sync);
+  still.addEventListener('change',sync);
+  sync();
+})();
+</script>
+<script>
+/* Two-step waitlist modal. Netlify Forms via fetch so the page never
+   navigates; native constraint validation gates the submit event. */
+(function(){
+  var m=document.getElementById('waitlist');
+  if(!m) return;
+  var panel=m.querySelector('.modal-panel'), steps={}, opener=null;
+  m.querySelectorAll('[data-step]').forEach(function(el){ steps[el.dataset.step]=el; });
+
+  function show(k){
+    for(var n in steps) steps[n].hidden = (n!==k);
+    var f=steps[k].querySelector('input:not([type=hidden]):not([name=bot-field]), button');
+    if(f) f.focus();
+  }
+  function open(){
+    opener=document.activeElement;
+    m.hidden=false;
+    document.body.style.overflow='hidden';
+    show('pick');
+  }
+  function close(){
+    m.hidden=true;
+    document.body.style.overflow='';
+    if(opener&&opener.focus) opener.focus();
+  }
+
+  document.querySelectorAll('[data-waitlist]').forEach(function(b){
+    b.addEventListener('click',open);
+  });
+
+  m.addEventListener('click',function(e){
+    if(e.target===m||e.target.closest('[data-close]')) return close();
+    var go=e.target.closest('[data-go]');
+    if(go) return show(go.dataset.go);
+    if(e.target.closest('[data-back]')) return show('pick');
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(m.hidden) return;
+    if(e.key==='Escape') return close();
+    if(e.key!=='Tab') return;
+    var f=panel.querySelectorAll('a[href],button:not([disabled]),input:not([type=hidden])');
+    f=Array.prototype.filter.call(f,function(el){ return el.offsetParent!==null; });
+    if(!f.length) return;
+    var first=f[0], lastEl=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){ e.preventDefault(); lastEl.focus(); }
+    else if(!e.shiftKey&&document.activeElement===lastEl){ e.preventDefault(); first.focus(); }
+  });
+
+  m.addEventListener('submit',function(e){
+    e.preventDefault();                                  // fires only if valid
+    var form=e.target,
+        btn=form.querySelector('.wl-submit'),
+        err=form.querySelector('.wl-err'),
+        label=btn.textContent;
+    err.hidden=true; btn.disabled=true; btn.textContent='Sending\u2026';
+    fetch('/',{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams(new FormData(form)).toString()
+    }).then(function(r){
+      if(!r.ok) throw new Error(r.status);
+      form.reset(); show('done');
+    }).catch(function(){
+      err.hidden=false;
+      err.textContent='Could not send just now \u2014 please email hello@knotai.cloud.';
+    }).then(function(){
+      btn.disabled=false; btn.textContent=label;
+    });
+  });
+})();
+</script>
+<script>
+/* Hero video: autoplay is the happy path, but a policy block (Safari/iOS
+   Low Power Mode, per-site media settings, extensions) leaves the poster
+   sitting there. Retry when it becomes visible, when the tab returns, and
+   on the first user gesture. Logs the reason so it can be diagnosed. */
+(function(){
+  var v=document.querySelector('.reel video');
+  if(!v) return;
+  var gestures=['pointerdown','touchstart','keydown','wheel','scroll'], done=false;
+
+  function playing(){ return !v.paused && !v.ended && v.readyState>2; }
+  function drop(){
+    if(done) return; done=true;
+    gestures.forEach(function(e){ removeEventListener(e,kick,true); });
+  }
+  function kick(){
+    if(playing()) return drop();
+    var p=v.play();
+    if(p&&p.catch) p.catch(function(e){
+      console.warn('[hero video] play() rejected:',e.name+' \u2014 '+e.message,
+                   '| paused='+v.paused,'readyState='+v.readyState,
+                   'error='+(v.error?v.error.code:'none'));
+    });
+  }
+
+  v.addEventListener('playing',drop);
+  gestures.forEach(function(e){ addEventListener(e,kick,{capture:true,passive:true}); });
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) kick(); });
+  if(window.IntersectionObserver){
+    new IntersectionObserver(function(es){
+      es.forEach(function(en){ if(en.isIntersecting) kick(); });
+    },{threshold:.15}).observe(v);
+  }
+  addEventListener('load',function(){
+    setTimeout(function(){
+      if(!playing()){
+        console.warn('[hero video] not playing after load \u2014 paused='+v.paused,
+                     'readyState='+v.readyState,'networkState='+v.networkState,
+                     'error='+(v.error?v.error.code:'none'),
+                     '| will retry on first interaction');
+        kick();
+      }
+    },800);
+  });
+})();
+</script>
+<script>
+/* Section fade-ins. Fires once per section at 15% visibility, then stops
+   watching. The hero and the reel are deliberately not in .fade. */
+(function(){
+  var els=document.querySelectorAll('.fade');
+  if(!els.length) return;
+  var still=matchMedia('(prefers-reduced-motion:reduce)');
+  function revealAll(){ for(var i=0;i<els.length;i++) els[i].classList.add('in'); }
+  if(!window.IntersectionObserver||still.matches){ revealAll(); return; }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(en){
+      if(!en.isIntersecting) return;
+      en.target.classList.add('in');
+      io.unobserve(en.target);
+    });
+  },{threshold:.15});
+  for(var i=0;i<els.length;i++) io.observe(els[i]);
+  still.addEventListener('change',function(){ if(still.matches){ io.disconnect(); revealAll(); } });
+})();
+</script>
+</body>
+</html>

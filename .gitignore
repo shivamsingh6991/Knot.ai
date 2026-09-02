@@ -1,0 +1,19 @@
+# Source video originals. The hero loop shipped to the site is hero.mp4
+# (7.4MB, 1280w CRF32); the 4K masters it was encoded from are not tracked.
+*.mp4
+!hero.mp4
+*.mov
+*.avi
+*.mkv
+
+# Design sources and unused variants the site never references. All three
+# stay on disk locally, they just aren't tracked.
+knot-landing.svg
+knot-landing.png
+knot-logo-teal.png
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
