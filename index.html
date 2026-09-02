@@ -32,22 +32,24 @@
   --nav-r:83px;
   --text-in:25px;      /* body copy sits 25px inside the card column (x 90) */
   --media-gut:38px;    /* video + photo gutter */
+  --media-w:940px;     /* video and photo share one width */
+  --logo-h:32px;       /* model logo box */
   --radius-media:44px;
 
-  --sec:120px;         /* one gap between every top-level section */
+  --sec:96px;          /* one gap between every top-level section */
   --hair:#EDEDED;      /* separator rule */
 
-  --fs-h1:clamp(28px, 2.667vw + 17.6px, 56px);
-  --fs-lead:21px;
-  --fs-sub:20px;
-  --fs-h2:26px;
-  --fs-body:25px;
-  --lh-body:31px;
-  --fs-card-title:26px;
-  --fs-card-body:20px;
-  --fs-nav:20px;
-  --fs-mono:15px;
-  --fs-band:16px;
+  --fs-h1:clamp(28px, 2.667vw + 17.6px, 40px);
+  --fs-lead:17px;
+  --fs-sub:16px;
+  --fs-h2:21px;
+  --fs-body:21px;
+  --lh-body:26px;
+  --fs-card-title:22px;
+  --fs-card-body:17px;
+  --fs-nav:17px;
+  --fs-mono:13px;
+  --fs-band:14px;
 }
 
 *,*::before,*::after{box-sizing:border-box}
@@ -98,7 +100,7 @@ a{color:inherit}
 .nav .chip{grid-column:3;justify-self:end;margin-right:var(--nav-r)}
 
 /* ── hero ─────────────────────────────────────────────────────────── */
-.hero{text-align:center;padding:380px 20px 0}
+.hero{text-align:center;padding:150px 20px 0}
 /* ── waitlist modal ───────────────────────────────────────────────── */
 [hidden]{display:none!important}
 .modal{
@@ -165,9 +167,9 @@ h1{
 .hero .chip{margin-top:39px}
 
 /* ── hero video ───────────────────────────────────────────────────── */
-/* 1200px cap, centred; below ~1300 it goes percentage-based so the
+/* --media-w cap, centred; below that it goes percentage-based so the
    frame keeps side margins and never touches the viewport edge. */
-.reel{width:92%;max-width:1200px;margin:80px auto 0}
+.reel{width:92%;max-width:var(--media-w);margin:80px auto 0}
 .reel video{
   width:100%;aspect-ratio:16/9;height:auto;
   border-radius:var(--radius-media);
@@ -244,16 +246,16 @@ h2{margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.2;letter-spacin
 .model{display:flex;flex-direction:column;align-items:center;gap:8px;margin:0;width:104px}
 /* fixed-height box, centred both ways: every logo optically lands on the
    same line whatever its aspect ratio, so the names stay on one row. */
-.model .logo{display:flex;align-items:center;justify-content:center;width:100%;height:40px}
-.model img{max-height:40px;max-width:100%;width:auto;height:auto;object-fit:contain}
+.model .logo{display:flex;align-items:center;justify-content:center;width:100%;height:var(--logo-h)}
+.model img{max-height:var(--logo-h);max-width:100%;width:auto;height:auto;object-fit:contain}
 .model figcaption{
   font-size:13px;line-height:1.2;text-align:center;color:var(--grey-nav);
 }
 
 /* ── datacentre photo ─────────────────────────────────────────────── */
-.photo{margin:0 var(--media-gut)}
+.photo{width:92%;max-width:var(--media-w);margin-inline:auto}
 .photo img{
-  width:100%;height:710px;object-fit:cover;object-position:center 52%;
+  width:100%;height:auto;aspect-ratio:1363/710;object-fit:cover;object-position:center 52%;
   border-radius:var(--radius-media);
 }
 
@@ -347,8 +349,7 @@ html.js .fade.in{opacity:1;transform:none}
 @media (max-width:1330px){.model-row{grid-template-columns:repeat(4,auto)}}
 @media (max-width:1200px){
   :root{--gut:32px;--media-gut:24px;--radius-media:28px;--text-in:0px;--nav-l:32px;--nav-r:32px}
-  .hero{padding-top:180px}
-  .photo img{height:auto;aspect-ratio:1363/710}
+  .hero{padding-top:130px}
 }
 /* below 768 the nav is logo + button only */
 @media (max-width:767px){.navlinks{display:none}}
@@ -381,8 +382,6 @@ html.js .fade.in{opacity:1;transform:none}
   .model-row{gap:22px 16px}
   .reel{margin-top:48px}
   .model{width:68px}
-  .model .logo{height:32px}
-  .model img{max-height:32px}
   .model figcaption{font-size:12px}
   .reel figcaption{margin-top:20px}
   .signup input{flex:1 1 180px;width:auto}
