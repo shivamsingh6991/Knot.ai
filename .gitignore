@@ -12,6 +12,20 @@ knot-landing.svg
 knot-landing.png
 knot-logo-teal.png
 
+# Screenshot / render tooling. The typography pass drove headless Chrome
+# from a scratch dir outside the repo; these patterns are here so the
+# artefacts stay untracked if that ever runs in-tree.
+node_modules/
+package.json
+package-lock.json
+before/
+after/
+compare.html
+shot.js
+cpl.js
+audit.js
+text.js
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db
