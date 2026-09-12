@@ -154,12 +154,33 @@ a{color:inherit}
   -webkit-backdrop-filter:blur(14px) saturate(150%);
   backdrop-filter:blur(14px) saturate(150%);
   border-bottom:1px solid var(--hair);
-  opacity:0;transition:opacity .35s ease;
+  opacity:0;transition:opacity .2s ease;
 }
 .nav.is-light::before{opacity:1}
+/* Dark state. Transparent is correct against the photographs, but copy
+   scrolls underneath the bar there — the hero headline and the closing
+   line both passed straight through the links. This is a scrim, not a
+   bar: darkening plus a blur at the top, both masked so they fade to
+   nothing by the nav's bottom edge and leave no visible boundary. */
+.nav::after{
+  content:"";position:absolute;top:0;bottom:0;left:50%;
+  width:100vw;transform:translateX(-50%);z-index:-1;
+  /* The stops are set by measurement: the nav's own text sits at the
+     vertical middle of the bar, so both the gradient and the mask have
+     to still be strong there — an early mask fade put white links back
+     on a white headline at 2.3:1. */
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,.74) 0%, rgba(0,0,0,.62) 55%, rgba(0,0,0,.30) 82%, rgba(0,0,0,0) 100%);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 68%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 68%,transparent 100%);
+  transition:opacity .2s ease;
+}
+.nav.is-light::after{opacity:0}
 .nav .brand span,.nav .brand img,.navlinks a,.nav .chip{
-  transition:color .35s ease, background-color .35s ease,
-             border-color .35s ease, filter .35s ease;
+  transition:color .2s ease, background-color .2s ease,
+             border-color .2s ease, filter .2s ease;
 }
 /* light state: ink on off-white, and the glass pill becomes an outline */
 .nav.is-light .brand span{color:var(--ink)}
@@ -184,7 +205,7 @@ a{color:inherit}
 }
 .nav-toggle span{
   display:block;width:22px;height:2px;background:#fff;
-  transition:transform .28s ease, opacity .28s ease, background-color .35s ease;
+  transition:transform .28s ease, opacity .28s ease, background-color .2s ease;
 }
 .nav.is-light .nav-toggle span{background:var(--ink)}
 .nav-toggle[aria-expanded="true"] span:first-child{transform:translateY(4px) rotate(45deg)}
@@ -903,21 +924,37 @@ function initNav(){
   var menu=document.getElementById('navmenu');
 
   if(dark.length && window.IntersectionObserver){
-    var under=[], io=null;
-    function paint(){ nav.classList.toggle('is-light', under.length===0); }
-    function observe(){
-      if(io) io.disconnect();
-      under=[];
-      var strip=nav.offsetHeight || 72;
-      io=new IntersectionObserver(function(entries){
+    /* Two 1px lines, one at the nav's top edge and one at its bottom. The
+       bar is dark only when a single photographic section crosses BOTH,
+       i.e. covers the whole bar. Testing one line is not enough: at the
+       boundary the band is half over the photograph and half over the
+       light section below it, and white links land on white. */
+    var atTop=[], atBottom=[], ioTop=null, ioBottom=null;
+    function paint(){
+      var covered=dark.some(function(el){
+        return atTop.indexOf(el)>=0 && atBottom.indexOf(el)>=0;
+      });
+      nav.classList.toggle('is-light', !covered);
+    }
+    function lineAt(offset, bucket){
+      var vh=window.innerHeight;
+      return new IntersectionObserver(function(entries){
         entries.forEach(function(en){
-          var i=under.indexOf(en.target);
-          if(en.isIntersecting){ if(i<0) under.push(en.target); }
-          else if(i>=0) under.splice(i,1);
+          var i=bucket.indexOf(en.target);
+          if(en.isIntersecting){ if(i<0) bucket.push(en.target); }
+          else if(i>=0) bucket.splice(i,1);
         });
         paint();
-      },{rootMargin:'0px 0px '+(-(window.innerHeight-strip))+'px 0px', threshold:0});
-      dark.forEach(function(el){ io.observe(el); });
+      },{rootMargin:(-offset)+'px 0px '+(-(vh-offset-1))+'px 0px', threshold:0});
+    }
+    function observe(){
+      if(ioTop) ioTop.disconnect();
+      if(ioBottom) ioBottom.disconnect();
+      atTop.length=0; atBottom.length=0;
+      var h=nav.offsetHeight || 72;
+      ioTop=lineAt(0, atTop);
+      ioBottom=lineAt(h, atBottom);
+      dark.forEach(function(el){ ioTop.observe(el); ioBottom.observe(el); });
     }
     observe(); paint();
     addEventListener('resize', observe, {passive:true});
