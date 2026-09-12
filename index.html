@@ -33,6 +33,11 @@
 <meta name="twitter:description" content="Every time an agent pauses, the model forgets where it was and reads the whole conversation again. We're building the layer that stops that.">
 <meta name="twitter:image" content="https://knotai.cloud/og-image.png">
 <meta name="twitter:image:alt" content="Knot.ai — Your agent pays twice for the same conversation.">
+<!-- The LCP image. Preloaded so the fetch starts while the head is still
+     parsing rather than when the parser reaches <picture> further down. -->
+<link rel="preload" as="image" type="image/webp" fetchpriority="high"
+      imagesrcset="hero-780.webp 780w, hero-1280.webp 1280w, hero-1440.webp 1440w, hero-1920.webp 1920w"
+      imagesizes="100vw">
 <link rel="preconnect" href="https://app.cal.com">
 <link rel="dns-prefetch" href="https://app.cal.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -350,7 +355,14 @@ a{color:inherit}
   /* symmetric, so the copy sits on the hero's true centre line */
   padding-block:7rem;
 }
-.hero-bg{position:absolute;inset:0;z-index:0}
+/* A 24px blurred frame of the photograph, inlined. It costs 0.2KB and
+   paints with the HTML, so the hero is never an empty box while the real
+   image is in flight. The <img> covers it the moment it decodes. */
+.hero-bg{
+  position:absolute;inset:0;z-index:0;
+  background-image:url("data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAABQBACdASoYAA0APslSo0snpKMhsAgA8BkJbACdMoMYAEk10fh99E+mZCZwAP7sVcKhFz1Joq2gnnGCeKzuZggaZKIbFVv/iKBPjTaqacdOqQKNXJF+P95E9t15saE/CQdFL3xEw+xmw1blOvbyjdvxHHDlwFf1T/Bxa6y5SMFyw7W+KwP9TkaTRAAAAA==");
+  background-size:cover;background-position:center;
+}
 .hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center}
 /* Below 900px the copy spans nearly the full width, so the tree cannot be
    in frame and clear of the text at the same time. Panning the crop left
@@ -892,8 +904,28 @@ Cal.ns["30min"]("ui", {
     }
   }
 });
-/* pull the booking UI down at load rather than on first click */
-Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
+/* Warm the booking UI, but not while the hero image is still arriving.
+   Left at parse time this pulled ~600KB of cal.com on first load and took
+   roughly a second off the hero on a slow connection. Deferred to idle
+   after load, or to the first hint that someone is heading for the
+   button, whichever comes first. */
+(function(){
+  var warmed=false;
+  function warm(){
+    if(warmed) return; warmed=true;
+    Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
+  }
+  function arm(){
+    var btn=document.getElementById('book-a-call');
+    if(btn){
+      btn.addEventListener('pointerenter', warm, {once:true});
+      btn.addEventListener('focus', warm, {once:true});
+    }
+    if(window.requestIdleCallback) requestIdleCallback(warm, {timeout:4000});
+    else setTimeout(warm, 2500);
+  }
+  addEventListener('load', arm, {once:true});
+})();
 
 /* Open the booking flow as an overlay on this page rather than letting the
    link navigate. Cal is defined synchronously by the snippet above, so a
@@ -1035,10 +1067,10 @@ else initNav();
   <section class="hero">
     <picture class="hero-bg" aria-hidden="true">
       <source type="image/webp"
-              srcset="hero-780.webp 780w, hero-1280.webp 1280w, hero-1920.webp 1920w"
+              srcset="hero-780.webp 780w, hero-1280.webp 1280w, hero-1440.webp 1440w, hero-1920.webp 1920w"
               sizes="100vw">
       <img src="hero-1280.jpg"
-           srcset="hero-780.jpg 780w, hero-1280.jpg 1280w, hero-1920.jpg 1920w"
+           srcset="hero-780.jpg 780w, hero-1280.jpg 1280w, hero-1440.jpg 1440w, hero-1920.jpg 1920w"
            sizes="100vw" width="1920" height="1080" alt=""
            loading="eager" fetchpriority="high" decoding="async">
     </picture>
@@ -1061,7 +1093,7 @@ else initNav();
     </div>
 
     <div class="evidence">
-      <p class="kicker"><img class="kicker-logo" src="microsoft-logo.png" alt="" width="224" height="48">Measured by Microsoft, June 2026</p>
+      <p class="kicker"><img class="kicker-logo" src="microsoft-logo.png" alt="" width="224" height="48" loading="lazy" decoding="async">Measured by Microsoft, June 2026</p>
       <div class="stats">
         <p class="stat"><b>90%</b><span>of the conversation is still in memory while an agent is mid-task</span></p>
         <p class="stat"><b>55%</b><span>after it pauses and comes back</span></p>
@@ -1076,7 +1108,7 @@ else initNav();
 
   <figure class="reel fade">
     <video src="hero.mp4" poster="hero-poster.jpg" width="1280" height="720"
-             autoplay muted loop playsinline disablepictureinpicture preload="metadata"></video>
+             autoplay muted loop playsinline disablepictureinpicture preload="none"></video>
     <figcaption>
       <span class="cap-title">Evolution of Technology</span>
       <span class="cap-strip"><span>Apollo 11</span> <span class="dot" aria-hidden="true">·</span> <span>The chip</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaGo</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaFold</span> <span class="dot" aria-hidden="true">·</span> <span>GPT</span> <span class="dot" aria-hidden="true">·</span> <span>Claude</span> <span class="dot" aria-hidden="true">·</span> <span>Agents</span></span>
@@ -1163,11 +1195,11 @@ else initNav();
     <h2>Models we plan to serve.</h2>
     <p class="model-lede">Open weights only. Nothing we serve is ours, and nothing we serve is locked to us.</p>
     <div class="model-row">
-      <figure class="model"><span class="logo"><img src="models/qwen.png" alt="Qwen logo"></span><figcaption>Qwen</figcaption></figure>
-      <figure class="model"><span class="logo"><img src="models/llama.png" alt="Llama logo"></span><figcaption>Llama</figcaption></figure>
-      <figure class="model"><span class="logo"><img src="models/mistral.png" alt="Mistral logo"></span><figcaption>Mistral</figcaption></figure>
-      <figure class="model"><span class="logo"><img src="models/deepseek.png" alt="DeepSeek logo"></span><figcaption>DeepSeek</figcaption></figure>
-      <figure class="model"><span class="logo"><img src="models/gemma.png" alt="Gemma logo"></span><figcaption>Gemma</figcaption></figure>
+      <figure class="model"><span class="logo"><img loading="lazy" decoding="async" src="models/qwen.png" alt="Qwen logo"></span><figcaption>Qwen</figcaption></figure>
+      <figure class="model"><span class="logo"><img loading="lazy" decoding="async" src="models/llama.png" alt="Llama logo"></span><figcaption>Llama</figcaption></figure>
+      <figure class="model"><span class="logo"><img loading="lazy" decoding="async" src="models/mistral.png" alt="Mistral logo"></span><figcaption>Mistral</figcaption></figure>
+      <figure class="model"><span class="logo"><img loading="lazy" decoding="async" src="models/deepseek.png" alt="DeepSeek logo"></span><figcaption>DeepSeek</figcaption></figure>
+      <figure class="model"><span class="logo"><img loading="lazy" decoding="async" src="models/gemma.png" alt="Gemma logo"></span><figcaption>Gemma</figcaption></figure>
     </div>
     <p class="model-note">Need one that isn&rsquo;t here? Tell us and we&rsquo;ll look at serving it.</p>
   </section>
