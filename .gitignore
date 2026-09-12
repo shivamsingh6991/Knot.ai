@@ -6,11 +6,20 @@
 *.avi
 *.mkv
 
-# Design sources and unused variants the site never references. All three
-# stay on disk locally, they just aren't tracked.
+# Design sources and unused variants the site never references. All of
+# these stay on disk locally, they just aren't tracked.
 knot-landing.svg
 knot-landing.png
 knot-logo-teal.png
+
+# Hero photograph masters. The site only ever loads the derived
+# -780/-1280/-1920 .webp and .jpg next to them; the masters are here to
+# re-derive from, not to ship.
+#   hero.jpg      9120x5130, 7.5MB  (Unsplash / Johannes Plenio) - the hero
+#   hero-2.jpg    3840x2160, 1.1MB  (Unsplash / Firli S) - the closing band
+#   pricing-2.jpg 6000x4000, 6.9MB  (Unsplash / Dillon Fancher) - pricing card
+hero.jpg
+hero-2.jpg
 
 # Screenshot / render tooling. The typography pass drove headless Chrome
 # from a scratch dir outside the repo; these patterns are here so the
@@ -31,3 +40,4 @@ text.js
 Thumbs.db
 desktop.ini
 *.swp
+pricing-2.jpg

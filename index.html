@@ -53,36 +53,43 @@
   --grey-link:#474747;
   --grey-privacy:#5B5B5B;
   --card-line:#E5E3DE;
+  /* Green, not a bright one. --green carries every accent red used to
+     (6.20:1 on --bg, so it clears AA for the 12px eyebrows); --green-dark
+     replaces pure black on filled buttons so they stay in the family;
+     --green-light is 2.28:1 on --bg and is therefore only ever a border
+     or a fill, never text. */
+  --green-dark:#15402B;
+  --green:#2B6B47;
+  --green-light:#6FB894;
   --shadow:0 4px 4px rgba(0,0,0,.25);
 
-  --col:1310px;        /* card row: x 65 → 1375 on a 1440 artboard */
-  --gut:65px;          /* page gutter */
-  --nav-l:77px;        /* nav side insets (logo left / button right) */
-  --nav-r:83px;
-  --text-in:25px;      /* body copy sits 25px inside the card column (x 90) */
-  --media-gut:38px;    /* video + photo gutter */
-  --media-w:940px;     /* video and photo share one width */
-  --logo-h:32px;       /* model logo box */
+  /* One content column for the whole page. Everything — nav, hero, every
+     heading, every grid, both media frames — starts on its left edge. */
+  --col:1200px;
+  --pad:24px;          /* gutter inside the column */
+  --nav-h:72px;        /* pinned nav bar */
+  --gut:65px;          /* page gutter (mobile band only) */
+  --media-gut:38px;
+  --logo-h:38px;       /* model logo box */
   --radius-media:44px;
 
-  --sec:96px;          /* one gap between every top-level section */
+  --sec:clamp(88px, 9.5vw, 152px);   /* one gap between top-level sections */
   --hair:#ECEAE5;      /* separator rule */
 
-  /* type scale, anchored on the hero's 40px h1 and stepping ~1.25:
-     12 · 15 · 18 · 20 · 28 · 40. Every h2 on the page is --fs-h2,
-     every card title --fs-card-title, every body paragraph --fs-body. */
-  --fs-h1:clamp(28px, 2.667vw + 17.6px, 40px);
-  --fs-h2:28px;
-  --fs-card-title:20px;
-  --fs-body:18px;
-  --lh-body:29px;
-  --fs-card-body:16px;
-  --fs-lead:17px;
-  --fs-sub:18px;
-  --fs-micro:12px;
+  /* Five content sizes, and that is the whole scale: hero headline,
+     section heading, card heading, body, caption. Everything that used to
+     have its own size — hero sub, band copy, card body, captions under the
+     media — now maps onto one of these. --fs-nav and --fs-mono are nav and
+     footer chrome, deliberately outside the scale. */
+  --fs-h1:clamp(38px, 5.2vw, 68px);        /* the hero headline, nowhere else */
+  --fs-h2:clamp(20px, 1.6vw, 25px);        /* every section heading */
+  --fs-item:19px;                          /* step lines, rate names */
+  --fs-body:17px;
+  --fs-micro:12px;                         /* eyebrows, kickers, captions */
+  --fs-stat:clamp(44px, 5.2vw, 68px);      /* the evidence numerals, nowhere else */
+  --lh-body:27px;
   --fs-nav:17px;
   --fs-mono:13px;
-  --fs-band:14px;
 
   /* ~70 characters per line, calibrated by measuring rendered lines —
      Figtree's average glyph is far narrower than its "0", so the ch
@@ -93,15 +100,21 @@
 
   /* vertical rhythm: tight inside a block, generous between them */
   --sp-eyebrow:10px;   /* eyebrow → heading */
-  --sp-head:16px;      /* heading → its paragraph */
+  --sp-head:12px;      /* heading → its paragraph */
   --sp-para:20px;      /* paragraph → paragraph */
-  --sp-block:40px;     /* heading block → card grid or panel */
+  --sp-block:clamp(40px, 4.5vw, 64px);  /* statement -> the thing under it */
 }
 
 *,*::before,*::after{box-sizing:border-box}
+/* so an anchor jump doesn't park a heading under the pinned nav */
+[id]{scroll-margin-top:calc(var(--nav-h) + 24px)}
+/* While the mobile menu is open the page behind it does not scroll. The
+   class goes on <html> as well as <body>: the scrolling element is the
+   document, so locking body alone leaves the page still scrollable. */
+html.menu-open,html.menu-open body{overflow:hidden}
 html{-webkit-text-size-adjust:100%}
 body{
-  margin:0;
+  margin:0;overflow-x:clip;
   background:var(--bg);
   color:var(--body);
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -112,9 +125,12 @@ body{
 img,video{display:block;max-width:100%}
 a{color:inherit}
 
-/* shared column */
-.col{max-width:var(--col);margin-inline:auto;padding-inline:20px}
-@media (min-width:1440px){.col{padding-inline:0}}
+/* shared column — one left edge for every word on the page. The hero,
+   the reel and the datacentre photo deliberately sit outside it: images
+   run edge to edge, type never does. */
+.col,.nav,.hero-copy,.models,.tail{
+  max-width:var(--col);margin-inline:auto;padding-inline:var(--pad);
+}
 
 /* ── nav ──────────────────────────────────────────────────────────── */
 /* three columns: logo | centred links | button.
@@ -122,84 +138,121 @@ a{color:inherit}
    viewport regardless of how wide the logo or the button are. */
 .nav{
   display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
-  padding:25px 0 0;
-  height:65px;
+  /* Pinned the whole way down. It carries two states: transparent over
+     the dark photographs, solid over everything between them. Which one
+     is decided by an IntersectionObserver watching the dark sections,
+     not by a scroll offset, so it survives any change in section height. */
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  height:var(--nav-h);
 }
+/* The nav itself is column-width, so its background needs to escape to
+   the full viewport. A pseudo-element does that without a wrapper. */
+.nav::before{
+  content:"";position:absolute;top:0;bottom:0;left:50%;
+  width:100vw;transform:translateX(-50%);z-index:-1;
+  background:rgba(252,252,250,.86);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  backdrop-filter:blur(14px) saturate(150%);
+  border-bottom:1px solid var(--hair);
+  opacity:0;transition:opacity .35s ease;
+}
+.nav.is-light::before{opacity:1}
+.nav .brand span,.nav .brand img,.navlinks a,.nav .chip{
+  transition:color .35s ease, background-color .35s ease,
+             border-color .35s ease, filter .35s ease;
+}
+/* light state: ink on off-white, and the glass pill becomes an outline */
+.nav.is-light .brand span{color:var(--ink)}
+.nav.is-light .brand img{filter:none}
+.nav.is-light .navlinks a{color:var(--grey-nav)}
+.nav.is-light .navlinks a:hover{color:var(--green)}
+.nav.is-light .chip{
+  background:transparent;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  border-color:var(--ink);color:var(--ink);box-shadow:none;
+}
+.nav.is-light .chip:hover{background:var(--green-dark);border-color:var(--green-dark);color:#fff}
+
+.nav-right{grid-column:3;justify-self:end;display:flex;align-items:center;gap:10px}
+
+/* Menu toggle: only below 900px, where three links plus a button cannot
+   fit on one row. Two bars that cross into an X when open. */
+.nav-toggle{
+  display:none;width:44px;height:44px;padding:0;
+  align-items:center;justify-content:center;flex-direction:column;gap:6px;
+  background:none;border:0;cursor:pointer;
+}
+.nav-toggle span{
+  display:block;width:22px;height:2px;background:#fff;
+  transition:transform .28s ease, opacity .28s ease, background-color .35s ease;
+}
+.nav.is-light .nav-toggle span{background:var(--ink)}
+.nav-toggle[aria-expanded="true"] span:first-child{transform:translateY(4px) rotate(45deg)}
+.nav-toggle[aria-expanded="true"] span:last-child{transform:translateY(-4px) rotate(-45deg)}
 .brand{display:flex;align-items:center;gap:14px;text-decoration:none}
-.nav .brand{justify-self:start;margin-left:var(--nav-l);min-width:0}
+.nav .brand{justify-self:start;min-width:0}
 .brand img{width:40px;height:40px}
 .brand span{font-size:27px;font-weight:700;letter-spacing:-.037em;color:var(--ink)}
+/* the mark is a dark PNG; over the photograph it has to be white */
+.nav .brand span{color:#fff}
+.nav .brand img{filter:brightness(0) invert(1)}
 .navlinks{display:flex;flex:none;gap:74.5px;justify-self:center;list-style:none;padding:0;margin:0}
-.navlinks a{color:var(--grey-nav);text-decoration:none;font-size:var(--fs-nav);white-space:nowrap}
-.navlinks a:hover{color:var(--ink)}
+.navlinks a{color:#fff;text-decoration:none;font-size:var(--fs-nav);white-space:nowrap}
+.navlinks a:hover{color:var(--green-light)}
 
-/* ── nav "coming soon" items ──────────────────────────────────────── */
-/* Not links: the pages don't exist yet. The nav typography is all
-   a-scoped, so these carry it themselves to match their siblings. */
-.nav-soon {
-  position: relative;
-  color: var(--grey-nav);
-  font-size: var(--fs-nav);
-  white-space: nowrap;
-  cursor: default;
-  opacity: .55;
-  transition: opacity .18s ease;
+/* ── "coming soon" tooltip ───────────────────────────────────────── */
+/* Built for the nav originally; the nav no longer needs it (Docs is gone
+   and Models & Pricing is a real link now), so it carries the pricing
+   rates instead. Hover or keyboard focus reveals it. */
+.soon{position:relative}
+.soon:focus-visible{outline:1px solid var(--green);outline-offset:6px;border-radius:3px}
+
+.soon-tip{
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  white-space:nowrap;
+  padding:5px 9px;
+  font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#FCFCFA;
+  background:var(--green);
+  border-radius:4px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(-2px);
+  transition:opacity .18s ease, transform .18s ease, visibility .18s;
+}
+.soon-tip::before{                /* little arrow */
+  content:"";
+  position:absolute;
+  bottom:100%;
+  left:14px;
+  border:4px solid transparent;
+  border-bottom-color:var(--green);
+}
+.soon:hover .soon-tip,.soon:focus-visible .soon-tip{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0);
 }
 
-.nav-soon:hover,
-.nav-soon:focus-visible { opacity: .8; }
-
-.nav-soon:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
-
-.nav-soon__tip {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-2px);
-  white-space: nowrap;
-  padding: 5px 9px;
-  font-size: 11px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: #FCFCFA;
-  background: #1A1A1A;
-  border-radius: 4px;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+@media (prefers-reduced-motion:reduce){
+  .soon-tip{transition:none}
 }
 
-.nav-soon__tip::before {          /* little arrow */
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 4px solid transparent;
-  border-bottom-color: #1A1A1A;
-}
-
-.nav-soon:hover .nav-soon__tip,
-.nav-soon:focus-visible .nav-soon__tip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nav-soon,
-  .nav-soon__tip { transition: none; }
-}
-
-@media (max-width: 720px) {       /* no hover on touch — show inline instead */
-  .nav-soon::after {
-    content: " · soon";
-    font-size: .75em;
-    letter-spacing: .04em;
-    opacity: .7;
+/* No hover on touch, so the label becomes inline text instead. */
+@media (hover:none), (max-width:720px){
+  .soon-tip{display:none}
+  .rate-n::after{
+    content:" · soon";
+    font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--green);
   }
-  .nav-soon__tip { display: none; }
 }
 
 .chip{
@@ -211,11 +264,9 @@ a{color:inherit}
   text-decoration:none;white-space:nowrap;cursor:pointer;
   transition:background-color .15s ease,color .15s ease;
 }
-.chip:hover{background:#1C1C1C;color:#fff}
-.nav .chip{grid-column:3;justify-self:end;margin-right:var(--nav-r)}
+.chip:hover{background:var(--green-dark);color:#fff}
+.nav .chip{grid-column:3;justify-self:end}
 
-/* ── hero ─────────────────────────────────────────────────────────── */
-.hero{text-align:center;padding:150px 20px 0}
 /* ── waitlist modal ───────────────────────────────────────────────── */
 [hidden]{display:none!important}
 .modal{
@@ -244,13 +295,13 @@ a{color:inherit}
   background:#fff;border:1px solid var(--card-line);border-radius:8px;
 }
 .wl-form input::placeholder{color:var(--grey-foot)}
-.wl-form input:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.wl-form input:focus-visible{outline:2px solid var(--green);outline-offset:-2px}
 .wl-actions{display:flex;align-items:center;gap:8px;margin-top:6px}
 .wl-submit{
   flex:1;height:46px;border:1px solid var(--ink);border-radius:8px;
-  background:var(--ink);color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer;
+  background:var(--green-dark);color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer;
 }
-.wl-submit:hover{background:#222}
+.wl-submit:hover{background:var(--green)}
 .wl-submit[disabled]{opacity:.6;cursor:default}
 .wl-back{
   border:0;background:none;font:inherit;font-size:16px;
@@ -264,102 +315,164 @@ a{color:inherit}
   .modal h2{font-size:20px}
 }
 
-/* ── hero particle field ──────────────────────────────────────────── */
-.hero{position:relative;isolation:isolate}
-#dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
-.hero>*:not(canvas){position:relative;z-index:1}
+/* ── hero ────────────────────────────────────────────────────────── */
+/* Full screen, image first, nav floating on top of it. Everything in
+   here is white-on-dark; there is no half-way state. */
+.hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  /* max(), not a bare 100svh: browser zoom shrinks the viewport in CSS
+     pixels while the text keeps its rem size, so a pure vh box gets
+     smaller exactly when its contents get bigger. The rem floor takes
+     over past roughly 150% zoom and the hero grows instead. */
+  min-height:max(100svh, 46rem);
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  /* symmetric, so the copy sits on the hero's true centre line */
+  padding-block:7rem;
+}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center}
+/* Below 900px the copy spans nearly the full width, so the tree cannot be
+   in frame and clear of the text at the same time. Panning the crop left
+   takes it out of frame rather than letting the subline run across it. */
+@media (max-width:900px){
+  .hero-bg img{object-position:40% center}
+}
+/* Three gradients, each doing one job, so the photograph keeps its
+   colour everywhere none of them is needed:
+   1 a thin wash under the nav, 2 the dark mass under the copy at the
+   bottom-left, 3 a gentle left-hand lift. The middle and the right of
+   the frame are untouched. */
+.hero-bg::after{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(to bottom,    rgba(0,0,0,.60) 0%, rgba(0,0,0,.36) 13%, rgba(0,0,0,0) 29%),
+    linear-gradient(to top right, rgba(0,0,0,.80) 0%, rgba(0,0,0,.50) 36%, rgba(0,0,0,0) 82%),
+    linear-gradient(to right,     rgba(0,0,0,.58) 0%, rgba(0,0,0,.26) 48%, rgba(0,0,0,0) 80%);
+}
+/* Below 900px the copy fills the width, so a diagonal has nowhere to
+   fade — and the eyebrow sits high in the block, which a purely
+   bottom-weighted wash starves. The mobile gradient is taller and
+   flatter for both reasons. */
+@media (max-width:900px){
+  .hero-bg::after{
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,.48) 0%, rgba(0,0,0,0) 16%),
+      linear-gradient(to top,    rgba(0,0,0,.80) 0%, rgba(0,0,0,.62) 52%,
+                                 rgba(0,0,0,.38) 80%, rgba(0,0,0,.13) 100%);
+  }
+}
+.hero-copy{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:flex-start}
 
 .eyebrow{
-  margin:0;font-size:16px;font-weight:600;letter-spacing:-.017em;line-height:1.2;
-  color:var(--ink);
+  display:inline-block;margin:0;
+  padding:6px 14px;border-radius:999px;
+  font-size:11px;letter-spacing:.12em;line-height:1.2;text-transform:uppercase;
+  font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:rgba(255,255,255,.12);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);
+  backdrop-filter:blur(14px) saturate(160%);
+  border:1px solid rgba(255,255,255,.35);
+  color:#fff;
 }
-.tagline{margin:16px 0 0;font-size:var(--fs-lead);font-style:italic;line-height:1.2;color:var(--ink)}
 h1{
-  margin:23px auto 0;max-width:1100px;
-  font-size:var(--fs-h1);font-weight:400;line-height:1.1;letter-spacing:-.02em;color:var(--ink);
-  text-wrap:balance;
+  margin:26px 0 0;max-width:16ch;
+  font-size:var(--fs-h1);font-weight:400;line-height:1.04;letter-spacing:-.025em;
+  color:#fff;text-wrap:balance;
+  text-shadow:0 2px 24px rgba(0,0,0,.35);
 }
-/* centred, so the measure cap matters more than it does for ragged-right
-   copy — 860px at 16px ran to ~108 characters a line */
-.sub{margin:21px auto 0;max-width:var(--measure);font-size:var(--fs-sub);font-weight:400;line-height:1.5;letter-spacing:-.011em}
-.hero .chip{margin-top:39px}
-.hero-alt{
-  display:block;margin-top:20px;font-size:16px;
-  color:var(--grey-nav);text-decoration:none;
+.sub{
+  margin:26px 0 0;max-width:44ch;
+  font-size:var(--fs-body);font-weight:400;line-height:1.5;letter-spacing:-.011em;
+  color:rgba(255,255,255,.90);
+  text-shadow:0 2px 24px rgba(0,0,0,.35);
 }
-.hero-alt:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.hero .chip{margin-top:40px;align-self:flex-start}
+
+/* ── glass ───────────────────────────────────────────────────────── */
+/* The pills that sit on the photograph. The inset highlight along the
+   top edge is what makes them read as glass rather than as a flat
+   translucent rectangle. */
+.hero .chip,.nav .chip{
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(16px) saturate(160%);
+  backdrop-filter:blur(16px) saturate(160%);
+  border:1px solid rgba(255,255,255,.45);
+  color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+  transition:background-color .15s ease,border-color .15s ease;
+}
+.hero .chip:hover,.nav .chip:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.65);
+  color:#fff;
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .hero .chip,.nav .chip,.eyebrow{background:rgba(255,255,255,.22)}
+}
 
 /* ── hero video ───────────────────────────────────────────────────── */
-/* --media-w cap, centred; below that it goes percentage-based so the
-   frame keeps side margins and never touches the viewport edge. */
-.reel{width:92%;max-width:var(--media-w);margin:80px auto 0}
+.reel{max-width:var(--col);margin:var(--sec) auto;padding-inline:var(--pad)}
 .reel video{
   width:100%;aspect-ratio:16/9;height:auto;
   border-radius:var(--radius-media);
   background:#F0EEE9;object-fit:cover;
 }
-.reel figcaption{margin-top:31px;text-align:center}
+.reel figcaption{margin-top:24px;text-align:center}
 .cap-title{
   display:block;
-  font-size:var(--fs-lead);font-weight:600;letter-spacing:-.043em;line-height:1.2;color:var(--ink);
+  font-size:var(--fs-body);font-weight:600;letter-spacing:-.043em;line-height:1.2;color:var(--ink);
 }
 /* inline flow, so a narrow viewport wraps the strip onto a second line
    instead of shrinking it */
 .cap-strip{
   display:block;margin-top:8px;
   font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:12px;letter-spacing:.04em;line-height:1.7;color:var(--grey-nav);
+  font-size:var(--fs-micro);letter-spacing:.04em;line-height:1.7;color:var(--grey-nav);
 }
 .cap-strip span{white-space:nowrap}
 .cap-strip .dot{color:var(--grey-card);padding:0 4px}
 
-/* ── engines band ─────────────────────────────────────────────────── */
-.band{
-  background:var(--bg-alt);
-  min-height:112px;
-  display:flex;align-items:center;justify-content:space-between;gap:32px;
-  padding:18px 45px 14px 42px;
-  flex-wrap:wrap;
-}
-.band p{margin:0;font-size:var(--fs-band);line-height:1.45;letter-spacing:-.006em;max-width:var(--measure)}
-.band-copy{min-width:0}
-.band-note{margin-top:8px;color:var(--grey-card)}
-.engines{display:flex;align-items:baseline;gap:27px;flex-wrap:wrap}
-.engines .lbl{font-size:var(--fs-band)}
-.engines .eng{font-size:var(--fs-nav)}
-
 /* ── prose sections ───────────────────────────────────────────────── */
-.prose{padding-left:var(--text-in);padding-right:var(--text-in)}
-h2{margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.2;letter-spacing:-.014em;color:var(--ink)}
+.prose{padding:0}
+/* Large and light rather than smaller and bold. At this size weight 400
+   reads as composure; 700 reads as a landing page shouting. */
+h2{margin:0;font-size:var(--fs-h2);font-weight:400;line-height:1.22;letter-spacing:-.02em;color:var(--ink)}
+/* 19/24ch suited the one-line statements these used to be; the longer
+   sentences wrapped to five narrow lines at that measure. */
+.statement{max-width:26ch}
+@media (min-width:901px){.statement{max-width:36ch}}
 /* same treatment the h1 already gets: balance headings so they don't
    drop a single word onto the last line, and let body copy avoid
    orphans. Both degrade to normal wrapping where unsupported. */
-h2,.card h3{text-wrap:balance}
-.prose p,.card p,.stat span,.evidence .cap,.sub,.model-lede,.model-note,.tail-sub{text-wrap:pretty}
+h2{text-wrap:balance}
+.prose p,.stat span,.evidence .cap,.sub,.model-lede,.model-note,.tail-sub{text-wrap:pretty}
 /* max-width here rather than on .p-wide/.p-narrow: this rule is (0,1,1)
    and would win over them anyway, so the measure lives in one place. */
 .prose p{
   margin:0;font-size:var(--fs-body);font-weight:400;line-height:var(--lh-body);
-  max-width:var(--measure);
+  max-width:640px;
 }
 .prose h2+p{margin-top:var(--sp-head)}
 .prose p+p{margin-top:var(--sp-para)}
-.prose strong{color:var(--ink)}
-
-.s-solve{margin-top:var(--sec)}
+/* The only bolded phrase in body copy on the page. Green rather than ink
+   so the emphasis carries colour as well as weight — deliberately not
+   reused anywhere else, or it stops meaning anything. */
+.prose strong{color:var(--green-dark)}
 
 /* Section eyebrow: mono uppercase, matching the caption strip and footer
    rather than the hero's .eyebrow, which is centred and ink-coloured.
    Scoped under .prose so it outranks `.prose p` — unscoped it lost both
    its size and its margin to that rule. */
-.prose .sec-eyebrow{
+.sec-eyebrow,.prose .sec-eyebrow{
   margin:0 0 var(--sp-eyebrow);max-width:none;
   font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:var(--fs-micro);letter-spacing:.08em;line-height:1.2;text-transform:uppercase;
-  color:var(--grey-card);
+  color:var(--green);
 }
-.prose .sec-close{margin-top:var(--sp-block)}
-.sec + .sec{margin-top:var(--sec)}
+/* One gap, applied to every top-level block, rather than only between
+   two adjacent .sec siblings — the band and the reel are neither. */
+.sec,.models{margin-top:var(--sec)}
 
 /* ── evidence block ───────────────────────────────────────────────── */
 /* Deliberately unlike anything around it: the numbers are the argument. */
@@ -367,36 +480,41 @@ h2,.card h3{text-wrap:balance}
    different kind of object from the white .card grid. The numbers are
    the argument — everything else in here is deliberately quiet. */
 .evidence{
-  margin-top:var(--sp-block);background:var(--bg-alt);
-  border-radius:16px;padding:44px max(var(--text-in),28px) 40px;
+  /* Bare on the page. A tinted panel made these read as a widget lifted
+     from somewhere else; unboxed, they read as the page's own claim. */
+  margin-top:calc(var(--sec) * .55);
 }
 .evidence .kicker{
   margin:0;
   font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:var(--fs-micro);letter-spacing:.08em;line-height:1.2;text-transform:uppercase;
-  color:var(--grey-nav);
+  color:var(--green);
+  display:flex;align-items:center;gap:10px;
 }
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:32px 40px;margin:36px 0 0}
+/* Attribution, so it sits quietly: height matched to the kicker's cap
+   height rather than its line box, which would make it shout. */
+.kicker-logo{width:auto;height:13px;opacity:.85;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:40px clamp(32px,5vw,72px);margin:48px 0 0}
 .stat{margin:0;max-width:34ch}
 .stat b{
   display:block;
-  font-size:clamp(44px,4.4vw,60px);font-weight:700;line-height:1;
-  letter-spacing:-.035em;color:var(--ink);
+  font-size:var(--fs-stat);font-weight:400;line-height:1;
+  letter-spacing:-.04em;color:var(--ink);
   font-variant-numeric:tabular-nums;
 }
 .stat span{
-  display:block;margin-top:14px;
-  font-size:var(--fs-card-body);line-height:1.5;color:var(--grey-card);
+  display:block;margin-top:18px;max-width:26ch;
+  font-size:var(--fs-body);line-height:1.5;color:var(--grey-card);
 }
 .evidence .cap{
-  margin:40px 0 0;max-width:var(--measure);
-  font-size:15px;line-height:1.6;color:var(--grey-card);
+  margin:clamp(40px,5vw,64px) 0 0;max-width:640px;
+  font-size:var(--fs-body);line-height:1.6;color:var(--grey-card);
 }
 .evidence .src{
-  display:inline-block;margin-top:var(--sp-head);font-size:15px;font-weight:500;
+  display:inline-block;margin-top:var(--sp-head);font-size:var(--fs-body);font-weight:500;
   color:var(--grey-link);text-decoration:underline;text-underline-offset:3px;
 }
-.evidence .src:hover{color:var(--ink)}
+.evidence .src:hover{color:var(--green)}
 /* three columns get cramped before the 768 breakpoint; stack early */
 @media (max-width:820px){
   .stats{grid-template-columns:1fr;gap:28px}
@@ -404,124 +522,223 @@ h2,.card h3{text-wrap:balance}
   .stat b{font-size:44px}
 }
 
-/* ── cards ────────────────────────────────────────────────────────── */
-.cards{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:17px;
-  margin-top:var(--sp-block);
+/* ── steps ───────────────────────────────────────────────────────── */
+/* Three beats, no boxes. The numerals carry the sequence; each item is a
+   heading plus one line, so the column gap has to open up from the 22px
+   that suited bare headings or the three read as one paragraph. */
+.steps{
+  list-style:none;margin:var(--sp-block) 0 0;padding:0;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(36px,4.5vw,64px);
 }
-/* four mechanisms don't fit the 3-up rhythm; 2x2 well before the
-   single-column rule at 900px takes over */
-.cards-4{grid-template-columns:repeat(4,1fr)}
-@media (max-width:1100px){.cards-4{grid-template-columns:repeat(2,1fr)}}
-.card{
-  border:1px solid var(--card-line);border-radius:10px;box-shadow:var(--shadow);
-  padding:40px 27px 41px;background:#fff;
+.steps li{margin:0}
+.steps h3{
+  margin:0;font-size:var(--fs-item);font-weight:500;
+  line-height:1.35;letter-spacing:-.012em;color:var(--ink);
 }
-.card h3{margin:0;font-size:var(--fs-card-title);font-weight:700;line-height:1.2;letter-spacing:-.006em;color:var(--ink)}
+.steps li p{
+  margin:10px 0 0;max-width:34ch;
+  font-size:var(--fs-body);line-height:1.55;color:var(--grey-card);
+}
+.step-n{
+  display:block;margin-bottom:16px;
+  font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:var(--fs-micro);letter-spacing:.12em;color:var(--green);
+}
+@media (max-width:700px){
+  .steps{grid-template-columns:1fr;gap:32px}
+  .step-n{margin-bottom:12px}
+}
+
+/* ── pricing card ────────────────────────────────────────────────── */
+/* Inset to the same width as the video card, with the photograph blurred
+   behind it. The blur is why a 1280px source is plenty here. */
+#pricing{max-width:var(--col);margin-inline:auto;padding-inline:var(--pad)}
+.price-card{
+  position:relative;isolation:isolate;overflow:hidden;
+  border-radius:var(--radius-media);
+  padding:clamp(36px,4.6vw,64px);
+}
+.price-bg{position:absolute;inset:0;z-index:0}
+.price-bg img{
+  width:100%;height:100%;object-fit:cover;object-position:center;
+  /* 4px, not 10: enough to stop detail competing with the copy, little
+     enough that the photograph is still legible as a photograph. Scaled
+     up so the blur's soft edge never reaches the card's corners. */
+  filter:blur(4px);transform:scale(1.04);
+}
+.price-bg::after{
+  content:"";position:absolute;inset:0;
+  /* Measured, not guessed: the --green-light eyebrow is the smallest text
+     on the card and sets the floor. .62 clears it at 6.5:1 on desktop and
+     leaves the photograph legible under the 4px blur. */
+  background:linear-gradient(135deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,.46) 55%, rgba(0,0,0,.38) 100%);
+}
+/* The narrow card crops to a much brighter part of the frame, where .62
+   drops the eyebrow to 2.6:1 — mobile needs its own weight. */
+@media (max-width:900px){
+  .price-bg::after{
+    background:linear-gradient(135deg, rgba(0,0,0,.84) 0%, rgba(0,0,0,.68) 55%, rgba(0,0,0,.58) 100%);
+  }
+}
+.price-body{position:relative;z-index:1}
+.price-card .sec-eyebrow{color:var(--green-light)}
+.price-card .statement{color:#fff}
+.price-card .sec-lede{color:rgba(255,255,255,.86);max-width:52ch}
+.price-card .rate-n{color:#fff}
+.price-card .rate-d{color:rgba(255,255,255,.78)}
+.price-card .rate-n::after{color:var(--green-light)}
+
+/* ── pricing rates ───────────────────────────────────────────────── */
+/* Same treatment as the evidence numbers: no cards, no borders, three
+   columns of bare text with the tooltip attached to each. */
+.rates{
+  list-style:none;margin:clamp(40px,4.4vw,60px) 0 0;padding:0;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(28px,4.5vw,72px);
+}
+.rates li{position:relative;margin:0;cursor:default}
+.rate-n{
+  display:block;font-size:var(--fs-item);font-weight:500;
+  line-height:1.35;letter-spacing:-.012em;color:var(--ink);
+}
+.rate-d{
+  display:block;margin-top:10px;max-width:30ch;
+  font-size:var(--fs-body);line-height:1.5;color:var(--grey-card);
+}
+@media (max-width:700px){.rates{grid-template-columns:1fr;gap:32px}}
 /* titles run to one or two lines, which left the body copy starting at a
    different height in each card. Reserve two lines so every body in a row
    starts on the same baseline. Only matters while the grid is multi-column. */
-@media (min-width:901px){.card h3{min-height:2.4em}}
-/* the cap only bites once the grid collapses to one column, where a
-   card body would otherwise run the full width of the page */
-.card p{margin:var(--sp-head) 0 0;font-size:var(--fs-card-body);line-height:1.55;color:var(--grey-card);max-width:var(--measure)}
+@media (min-width:901px){}
 
-/* warm panel. Horizontal padding is --text-in so the copy keeps the
-   same left edge as the untinted prose above it, with a floor so the
-   text never touches the tint edge once --text-in drops to 0. */
-.s-building{
-  margin-top:var(--sec);background:var(--bg-alt);border-radius:16px;
-  padding:44px max(var(--text-in), 26px) 46px;
+/* Untinted, like everything else. With the evidence panel gone this was
+   the last box on the page, and one lone box reads as an orphan. */
+.s-building{margin:0}
+.s-building .chip{margin-top:var(--sp-block);font-size:var(--fs-item)}
+.built-on{
+  margin:var(--sp-para) 0 0;font-size:var(--fs-body);line-height:1.5;color:var(--grey-card);
 }
-.s-building .chip{margin-top:var(--sp-block);font-size:var(--fs-card-title)}
 
 /* ── models ───────────────────────────────────────────────────────── */
+/* The one centred section. The logo row is capped and centred as a unit
+   rather than spread across the column — spreading five small marks over
+   1152px reads as a logo wall, which is not what this is. */
 .models{text-align:center}
-.models h2{
-  font-size:var(--fs-h2);font-weight:700;font-style:italic;color:var(--grey-italic);
-}
 /* explicit column count so the wrap is deterministic — flex-wrap left a
    single orphan on the second row at some widths. */
 .model-row{
-  display:grid;grid-template-columns:repeat(5,auto);justify-content:center;
-  gap:36px 64px;margin-top:109px;padding-inline:20px;
+  display:flex;flex-wrap:wrap;justify-content:center;
+  max-width:700px;margin-inline:auto;
+  gap:28px 44px;margin-top:56px;
 }
-.model{display:flex;flex-direction:column;align-items:center;gap:8px;margin:0;width:104px}
+.model{display:flex;flex-direction:column;align-items:center;gap:8px;margin:0;width:auto;min-width:0}
 /* fixed-height box, centred both ways: every logo optically lands on the
    same line whatever its aspect ratio, so the names stay on one row. */
 .model .logo{display:flex;align-items:center;justify-content:center;width:100%;height:var(--logo-h)}
 .model img{max-height:var(--logo-h);max-width:100%;width:auto;height:auto;object-fit:contain}
 .model figcaption{
-  font-size:13px;line-height:1.2;text-align:center;color:var(--grey-nav);
+  font-size:var(--fs-micro);line-height:1.2;color:var(--grey-nav);
 }
-.model-note,
-.model-lede{
-  margin-inline:auto;max-width:var(--measure);padding-inline:20px;
-  font-size:var(--fs-card-body);line-height:1.55;color:var(--grey-card);
+.model-note,.model-lede{
+  max-width:640px;margin-inline:auto;
+  font-size:var(--fs-body);line-height:1.55;color:var(--grey-card);
 }
 .model-lede{margin-top:var(--sp-head)}
 .model-note{margin-top:var(--sp-block)}
-/* the row's 109px top margin assumed the heading stood alone */
-.model-lede + .model-row{margin-top:56px}
+.model-lede + .model-row{margin-top:48px}
 
-/* ── datacentre photo ─────────────────────────────────────────────── */
-.photo{width:92%;max-width:var(--media-w);margin-inline:auto}
-.photo img{
-  width:100%;height:auto;aspect-ratio:1363/710;object-fit:cover;object-position:center 52%;
-  border-radius:var(--radius-media);
+/* ── coda ────────────────────────────────────────────────────────── */
+/* The photograph runs from the closing line to the bottom edge of the
+   page. The coda, the newsletter and the whole footer sit on top of it;
+   there is no white section after this one. */
+.closing{
+  position:relative;isolation:isolate;overflow:hidden;
+  margin-top:var(--sec);
+}
+.closing-bg{position:absolute;inset:0;z-index:0}
+.closing-bg img{width:100%;height:100%;object-fit:cover;object-position:center 62%}
+.closing > :not(picture){position:relative;z-index:1}
+.coda{
+  min-height:max(56svh, 26rem);
+  display:flex;align-items:center;justify-content:center;
+  padding:6rem var(--pad);
+}
+/* Light at the top so the tree and the greens still read, deepening
+   toward the base where the small footer links need 4.5:1. Every
+   transition is long enough that there is no visible boundary. */
+.closing-bg::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,.06)  0%,
+    rgba(0,0,0,.22) 14%,
+    rgba(0,0,0,.52) 30%,
+    rgba(0,0,0,.52) 40%,
+    rgba(0,0,0,.58) 56%,
+    rgba(0,0,0,.74) 78%,
+    rgba(0,0,0,.86) 100%);
+}
+.coda p{
+  position:relative;z-index:1;margin:0;max-width:22ch;text-align:center;
+  /* The one deliberate exception to the type scale: this is the page's
+     single statement, and at --fs-h2 on a 560px photograph it whispered. */
+  font-size:clamp(26px, 2.7vw, 36px);font-weight:400;line-height:1.25;letter-spacing:-.018em;
+  color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45), 0 2px 28px rgba(0,0,0,.5);
 }
 
 /* ── newsletter ───────────────────────────────────────────────────── */
-.tail{padding:0 12px 16px 21px;max-width:1440px;margin-inline:auto}
-.tail h2{font-size:var(--fs-h2);font-weight:600}
-.tail-sub{margin:var(--sp-head) 0 0 4px;max-width:var(--measure);font-size:var(--fs-card-body);line-height:1.55;color:var(--grey-card)}
-.signup{display:flex;gap:14px;margin-top:25px;margin-left:4px;flex-wrap:wrap}
+.tail{padding-block:clamp(56px,6vw,88px) 0}
+/* Everything in this region sits on the photograph. Scoped to .closing so
+   these win over the base .tail rules declared further down the sheet. */
+.closing .tail h2{color:#fff}
+.closing .tail-sub{color:#fff}
+.closing .brand span{color:#fff}
+/* the mark is a dark PNG, inverted here as it is over the hero */
+.closing .brand img{filter:brightness(0) invert(1)}
+.closing .copyright{color:rgba(255,255,255,.82)}
+.closing .foot-cols a{color:#fff}
+.closing .foot-cols a:hover{color:var(--green-light)}
+.closing .c3 a{color:rgba(255,255,255,.82)}
+.tail h2{font-size:var(--fs-h2);font-weight:700}
+.tail-sub{margin:var(--sp-head) 0 0;max-width:640px;font-size:var(--fs-body);line-height:1.55;color:var(--grey-card)}
+.signup{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap}
 .signup input{
   width:202px;height:49px;padding:0 21px 6px;line-height:1;
   border:0;border-radius:5px;background:#EFEDE8;
-  font:inherit;font-size:16px;color:var(--ink);
+  font:inherit;font-size:var(--fs-body);color:var(--ink);
 }
 .signup input::placeholder{color:var(--ink);opacity:1}
 .signup button{
   width:123px;height:46px;align-self:flex-start;margin-top:1px;
-  border:1px solid #000;border-radius:5px;background:#000;color:#fff;
-  font:inherit;font-size:20px;cursor:pointer;
+  border:1px solid var(--green-dark);border-radius:5px;background:var(--green-dark);color:#fff;
+  font:inherit;font-size:var(--fs-card-title);cursor:pointer;
 }
-.signup button:hover{background:#222}
+.signup button:hover{background:var(--green)}
 
 /* ── footer ───────────────────────────────────────────────────────── */
 .foot{
   display:flex;align-items:flex-start;justify-content:space-between;gap:40px;
-  margin-top:var(--sec);flex-wrap:wrap;
+  margin-top:clamp(56px,6vw,88px);padding-bottom:clamp(48px,5vw,72px);flex-wrap:wrap;
 }
-.foot-cols{display:flex;align-items:flex-end;gap:0;font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+/* flex-end put three columns of 2/3/1 links on three different baselines;
+   flex-start gives them one shared top edge. */
+.foot-cols{display:flex;align-items:flex-start;gap:0;font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
 .foot-cols ul{list-style:none;margin:0;padding:0}
 .foot-cols li{line-height:20px}
 .foot-cols li+li{margin-top:9px}
 .foot-cols a{
   color:var(--grey-link);text-decoration:none;font-size:var(--fs-mono);line-height:20px;
 }
-.foot-cols a:hover{text-decoration:underline}
-.foot-brand{padding-top:16px;margin-left:4px}
+.foot-cols a:hover{color:var(--green);text-decoration:underline}
+.foot-brand{padding-top:0}
 .c1{width:112px}
 .c2{width:157px}
 .c3 a{color:var(--grey-privacy)}
 .copyright{
-  margin:8px 0 0 -4px;
+  margin:8px 0 0;
   font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:var(--fs-mono);color:var(--grey-foot);
 }
 
 /* ── section separators ──────────────────────────────────────────── */
-/* an <hr> rather than a pseudo-element: .band is a flex container and
-   .band/.photo carry their own backgrounds, so a ::before would land
-   inside them. Width tracks .col's *content* box, not its border box. */
-.rule{
-  border:0;height:1px;background:var(--hair);
-  width:calc(min(100%, var(--col)) - 40px);
-  margin:calc(var(--sec) / 2) auto;
-}
-@media (min-width:1440px){.rule{width:min(100%, var(--col))}}
 
 /* ── scroll fade-ins ──────────────────────────────────────────────── */
 /* .js is set in <head>, so the hidden state never applies without JS.
@@ -537,12 +754,10 @@ html.js .fade.in{opacity:1;transform:none}
 .navlinks a{transition:color .15s ease}
 .signup button,.wl-submit{transition:background-color .15s ease,transform .15s ease}
 .signup button:hover,.wl-submit:hover{transform:translateY(-1px)}
-.card{transition:border-color .15s ease}
-.card:hover{border-color:#D5D2CB}
 .foot-cols a,.wl-back,.modal-x{transition:color .15s ease,background-color .15s ease}
 /* :where() keeps this at zero specificity, so the inset outline on the
    modal inputs still wins */
-:where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+:where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--green);outline-offset:2px}
 ::selection{background:#EAE7E1;color:var(--ink)}
 
 /* ── touch targets ──────────────────────────────────────────────── */
@@ -553,6 +768,10 @@ html.js .fade.in{opacity:1;transform:none}
   .foot-cols li+li{margin-top:0}
   .navlinks a{display:inline-block;padding-block:12px}
   .wl-back{padding:12px 14px}
+  /* 22px on its own; padding brings it to 44 without moving the text */
+  .evidence .src{padding-block:12px}
+  .chip{min-height:44px}
+  .brand{padding-block:2px}
   .modal-x{width:44px;height:44px}
 }
 
@@ -561,40 +780,57 @@ html.js .fade.in{opacity:1;transform:none}
 /* 5 across fits to ~720px; below that a clean 3+2 rather than an overflow */
 @media (max-width:720px){.model-row{grid-template-columns:repeat(3,auto)}}
 @media (max-width:1200px){
-  :root{--gut:32px;--media-gut:24px;--radius-media:28px;--text-in:0px;--nav-l:32px;--nav-r:32px}
-  .hero{padding-top:130px}
+  :root{--gut:32px;--media-gut:24px;--radius-media:28px;--pad:32px}
 }
 /* below 768 the nav is logo + button only */
-@media (max-width:767px){.navlinks{display:none}}
+/* Below 900px "Inference · Models & Pricing · About Us" plus the button
+   measures wider than the viewport, so the links move into a panel. */
+@media (max-width:900px){
+  /* flex, not grid: a fixed-position child of a grid container is laid
+     out against its grid area, which pinned the panel to the middle
+     column instead of letting it span the viewport. */
+  .nav{display:flex;align-items:center;justify-content:space-between}
+  .nav-toggle{display:inline-flex}
+  .navlinks{
+    position:fixed;left:0;top:var(--nav-h);width:100vw;
+    display:none;flex-direction:column;align-items:stretch;gap:0;
+    padding:6px var(--pad) 18px;
+    background:rgba(252,252,250,.97);
+    -webkit-backdrop-filter:blur(16px) saturate(150%);
+    backdrop-filter:blur(16px) saturate(150%);
+    border-bottom:1px solid var(--hair);
+  }
+  .navlinks.open{display:flex}
+  .navlinks a,
+  .nav.is-light .navlinks a{
+    display:block;width:100%;padding:14px 0;
+    font-size:18px;color:var(--ink);
+  }
+  .navlinks a:hover,
+  .nav.is-light .navlinks a:hover{color:var(--green)}
+}
 @media (max-width:900px){
   :root{
-    --fs-lead:19px;--fs-h2:26px;--fs-body:17px;--lh-body:27px;
-    --fs-card-title:19px;--fs-card-body:16px;--fs-nav:17px;--fs-mono:15px;
-    --fs-sub:17px;--fs-band:15px;
-    --sec:72px;--sp-block:32px;
+    --fs-h2:26px;--fs-body:17px;--lh-body:27px;
+    --fs-card-title:19px;--fs-nav:17px;--fs-mono:15px;
+    --sec:116px;--sp-block:32px;
   }
   .brand span{font-size:24px}
-  .hero{padding-top:120px}
-  .cards{grid-template-columns:1fr;gap:16px}
-  .card p{margin-top:20px}
-  .s-solve{margin-top:64px}
   .s-building{margin-top:48px}
   .model-row{margin-top:48px;gap:28px 40px}
 }
 @media (max-width:640px){
   :root{
-    --fs-lead:17px;--fs-sub:16px;--fs-band:14px;--fs-h2:23px;
-    --fs-body:16px;--lh-body:26px;--fs-card-title:18px;--fs-card-body:15px;--fs-nav:16px;
-    --gut:20px;--media-gut:16px;--radius-media:20px;--nav-l:20px;--nav-r:20px;
-    --sec:56px;--sp-block:28px;--sp-para:16px;
+    --fs-h2:23px;
+    --fs-body:16px;--lh-body:26px;--fs-card-title:18px;--fs-nav:16px;
+    --gut:20px;--media-gut:16px;--radius-media:20px;--pad:20px;
+    --sec:88px;--sp-block:28px;--sp-para:16px;
+    --nav-h:64px;
   }
-  .hero{padding-top:84px}
   .s-building .chip{font-size:18px}
-  .band{padding:20px var(--gut);gap:16px}
-  .engines{gap:16px}
   .model-row{gap:22px 16px}
   .reel{margin-top:48px}
-  .model{width:68px}
+  .model{width:auto}
   .model figcaption{font-size:12px}
   .reel figcaption{margin-top:20px}
   .signup input{flex:1 1 180px;width:auto}
@@ -608,91 +844,187 @@ html.js .fade.in{opacity:1;transform:none}
 <script type="text/javascript">
 (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if(typeof namespace === "string"){cal.ns[namespace] = cal.ns[namespace] || api;p(cal.ns[namespace], ar);p(cal, ["initNamespace", namespace]);} else p(cal, ar); return;} p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");
 Cal("init", "30min", {origin:"https://cal.com"});
-Cal.ns["30min"]("ui", {"theme":"dark","hideEventTypeDetails":false,"layout":"month_view"});
+/* The embed is a cross-origin iframe, so our stylesheet cannot reach into
+   it. These are the hooks Cal.com exposes: theme, brandColor, and the
+   cal-* CSS variables. There is no font option, so it keeps Cal's own. */
+Cal.ns["30min"]("ui", {
+  theme: "light",
+  hideEventTypeDetails: false,
+  layout: "month_view",
+  styles: { branding: { brandColor: "#2B6B47" } },
+  cssVarsPerTheme: {
+    light: {
+      "cal-brand": "#2B6B47",
+      "cal-brand-emphasis": "#15402B",
+      "cal-brand-text": "#FFFFFF",
+      "cal-bg": "#FCFCFA",
+      "cal-bg-emphasis": "#F5F4F1",
+      "cal-bg-subtle": "#F5F4F1",
+      "cal-bg-muted": "#FCFCFA",
+      "cal-text": "#141414",
+      "cal-text-emphasis": "#141414",
+      "cal-text-subtle": "#4A4A4A",
+      "cal-text-muted": "#8D8D8D",
+      "cal-border": "#ECEAE5",
+      "cal-border-subtle": "#ECEAE5",
+      "cal-border-emphasis": "#D5D2CB"
+    }
+  }
+});
 /* pull the booking UI down at load rather than on first click */
 Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
+
+/* Open the booking flow as an overlay on this page rather than letting the
+   link navigate. Cal is defined synchronously by the snippet above, so a
+   click before embed.js has landed still queues and opens once it does.
+   Delegated because this script runs in <head>, before the button exists. */
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest ? e.target.closest('#book-a-call') : null;
+  if (!btn || !window.Cal) return;
+  e.preventDefault();
+  Cal.ns["30min"]("modal", {
+    calLink: "shivam-singh-krvlu4/30min",
+    config: { layout: "month_view", theme: "light" }
+  });
+});
 </script>
 <script>document.documentElement.className+=" js"</script>
+
+<script>
+/* Pinned nav. Two states, decided by whether a dark photographic section
+   is currently under the bar. IntersectionObserver with the root shrunk
+   to a strip the height of the nav, so it tracks sections rather than a
+   scroll offset and keeps working if any section changes height. */
+function initNav(){
+  var nav=document.querySelector('.nav');
+  if(!nav) return;
+  var dark=[].slice.call(document.querySelectorAll('.hero,.closing'));
+  var toggle=nav.querySelector('.nav-toggle');
+  var menu=document.getElementById('navmenu');
+
+  if(dark.length && window.IntersectionObserver){
+    var under=[], io=null;
+    function paint(){ nav.classList.toggle('is-light', under.length===0); }
+    function observe(){
+      if(io) io.disconnect();
+      under=[];
+      var strip=nav.offsetHeight || 72;
+      io=new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          var i=under.indexOf(en.target);
+          if(en.isIntersecting){ if(i<0) under.push(en.target); }
+          else if(i>=0) under.splice(i,1);
+        });
+        paint();
+      },{rootMargin:'0px 0px '+(-(window.innerHeight-strip))+'px 0px', threshold:0});
+      dark.forEach(function(el){ io.observe(el); });
+    }
+    observe(); paint();
+    addEventListener('resize', observe, {passive:true});
+  } else {
+    nav.classList.add('is-light');   /* no observer: legible beats pretty */
+  }
+
+  if(toggle && menu){
+    /* Everything reachable while the panel is open: its links, then the
+       toggle, which doubles as the close control. */
+    function items(){
+      return [].slice.call(menu.querySelectorAll('a')).concat([toggle]);
+    }
+    function open(){
+      menu.classList.add('open');
+      document.documentElement.classList.add('menu-open');   /* lock the page behind */
+      toggle.setAttribute('aria-expanded','true');
+      toggle.setAttribute('aria-label','Close menu');
+      var f=items(); if(f[0]) f[0].focus();
+    }
+    function close(focusToggle){
+      menu.classList.remove('open');
+      document.documentElement.classList.remove('menu-open');
+      toggle.setAttribute('aria-expanded','false');
+      toggle.setAttribute('aria-label','Menu');
+      if(focusToggle) toggle.focus();
+    }
+    function isOpen(){ return menu.classList.contains('open'); }
+
+    toggle.addEventListener('click', function(){ isOpen()? close(false) : open(); });
+    menu.addEventListener('click', function(e){ if(e.target.closest('a')) close(false); });
+
+    document.addEventListener('keydown', function(e){
+      if(!isOpen()) return;
+      if(e.key==='Escape'){ close(true); return; }
+      if(e.key!=='Tab') return;
+      /* Cycle explicitly rather than letting Tab fall through to the page
+         behind the panel. */
+      var f=items(), i=f.indexOf(document.activeElement);
+      e.preventDefault();
+      var next = e.shiftKey ? (i<=0 ? f.length-1 : i-1)
+                            : (i===-1 || i===f.length-1 ? 0 : i+1);
+      f[next].focus();
+    });
+
+    addEventListener('resize', function(){ if(innerWidth>900 && isOpen()) close(false); }, {passive:true});
+  }
+}
+/* this script sits above the markup, so wait for the nav to exist */
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initNav);
+else initNav();
+</script>
 </head>
 <body>
 
 <header class="nav">
   <a class="brand" href="#top"><img src="knot-logo.png" alt="" width="40" height="40"><span>Knot.ai</span></a>
-  <ul class="navlinks">
+  <ul class="navlinks" id="navmenu" aria-label="Main menu">
     <li><a href="#problem">Inference</a></li>
-    <li><span class="nav-soon" tabindex="0" role="note" aria-describedby="soon-models">
-      Models &amp; Pricing
-      <span class="nav-soon__tip" id="soon-models" role="tooltip">Coming soon</span>
-    </span></li>
+    <li><a href="#pricing">Models &amp; Pricing</a></li>
     <li><a href="#about">About Us</a></li>
-    <li><span class="nav-soon" tabindex="0" role="note" aria-describedby="soon-docs">
-      Docs
-      <span class="nav-soon__tip" id="soon-docs" role="tooltip">Coming soon</span>
-    </span></li>
   </ul>
-  <a class="chip" href="https://cal.com/shivam-singh-krvlu4/30min"
-     onclick="if(customElements.get('cal-modal-box'))event.preventDefault()"
-     data-cal-link="shivam-singh-krvlu4/30min"
-     data-cal-namespace="30min"
-     data-cal-config='{"layout":"month_view","theme":"dark"}'>Book a call</a>
+  <div class="nav-right">
+  <!-- href is a no-JS fallback only; the handler below opens Cal's own
+       modal so the page is never navigated away from. data-cal-link is
+       deliberately absent so the embed does not also bind a second one. -->
+  <a class="chip" id="book-a-call" href="https://cal.com/shivam-singh-krvlu4/30min"
+     rel="noopener">Book a call</a>
+    <button class="nav-toggle" type="button" aria-expanded="false"
+            aria-controls="navmenu" aria-label="Menu">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </div>
 </header>
 
 <main id="top">
 
   <section class="hero">
-    <canvas id="dust" aria-hidden="true"></canvas>
-    <p class="eyebrow">COMING SOON</p>
-    <p class="tagline">Inference for the agentic era</p>
-    <h1>Your agent pays twice for the same conversation.</h1>
-    <p class="sub">Every time an agent pauses to run code or call a tool, the model forgets where it was.
-      Then it reads the whole conversation again, and you pay for it again. We are building the layer
-      that stops that, on Indian GPUs, billed in rupees.</p>
-    <button class="chip" type="button" data-waitlist>Join the waitlist</button>
-    <a class="hero-alt" href="#problem">See what we&rsquo;re measuring &rarr;</a>
-  </section>
-
-  <figure class="reel">
-    <video src="hero.mp4" poster="hero-poster.jpg" width="1280" height="720"
-             autoplay muted loop playsinline disablepictureinpicture preload="metadata"></video>
-    <figcaption>
-      <span class="cap-title">Evolution of Technology</span>
-      <span class="cap-strip"><span>Apollo 11</span> <span class="dot" aria-hidden="true">·</span> <span>The chip</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaGo</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaFold</span> <span class="dot" aria-hidden="true">·</span> <span>GPT</span> <span class="dot" aria-hidden="true">·</span> <span>Claude</span> <span class="dot" aria-hidden="true">·</span> <span>Agents</span></span>
-    </figcaption>
-  </figure>
-
-  <hr class="rule">
-
-  <section class="band fade">
-    <div class="band-copy">
-      <p>Built on open inference engines. We didn&rsquo;t write the hard parts and we don&rsquo;t pretend
-        otherwise &mdash; the work we are doing sits above them.</p>
-      <p class="band-note">We will publish our benchmarks and our method.</p>
-    </div>
-    <div class="engines">
-      <span class="lbl">Built on</span>
-      <span class="eng">vLLM</span>
-      <span class="eng">SGLang</span>
-      <span class="eng">LMCache</span>
-      <span class="eng">TensorRT-LLM</span>
+    <picture class="hero-bg" aria-hidden="true">
+      <source type="image/webp"
+              srcset="hero-780.webp 780w, hero-1280.webp 1280w, hero-1920.webp 1920w"
+              sizes="100vw">
+      <img src="hero-1280.jpg"
+           srcset="hero-780.jpg 780w, hero-1280.jpg 1280w, hero-1920.jpg 1920w"
+           sizes="100vw" width="1920" height="1080" alt=""
+           loading="eager" fetchpriority="high" decoding="async">
+    </picture>
+    <div class="hero-copy">
+      <p class="eyebrow">COMING SOON</p>
+      <h1>Every time your AI agent pauses, it starts reading from page one.</h1>
+      <p class="sub">And you pay for it. Again.</p>
+      <button class="chip" type="button" data-waitlist>Join the waitlist</button>
     </div>
   </section>
-
-  <hr class="rule">
 
   <section id="problem" class="col sec fade">
-    <div class="prose s-problem">
+    <div class="prose">
       <p class="sec-eyebrow">The problem</p>
-      <h2>Agents don&rsquo;t work like chat. Inference still assumes they do.</h2>
-      <p class="sec-lede">A chat message is one model call and it&rsquo;s finished. An agent task is dozens
-        of calls with long gaps in between &mdash; searching, running code, waiting on a tool, waiting on
-        a person. Every one of those calls resends the entire conversation so far.</p>
-      <p class="sec-lede">While the agent is paused, the server has no idea it&rsquo;s coming back. So it
-        clears the model&rsquo;s working memory of that conversation to make room for someone else. When the
-        agent returns, everything gets read from scratch.</p>
+      <h2 class="statement">An agent doesn&rsquo;t answer once and stop. It works in steps &mdash; searching,
+        writing code, checking, fixing.</h2>
+      <p class="sec-lede">Between every step it waits. And while it waits, it loses its place.</p>
+      <p class="sec-lede">So it reads the whole conversation again. Every step, another reading,
+        another bill.</p>
     </div>
 
     <div class="evidence">
-      <p class="kicker">Measured by Microsoft, June 2026</p>
+      <p class="kicker"><img class="kicker-logo" src="microsoft-logo.png" alt="" width="224" height="48">Measured by Microsoft, June 2026</p>
       <div class="stats">
         <p class="stat"><b>90%</b><span>of the conversation is still in memory while an agent is mid-task</span></p>
         <p class="stat"><b>55%</b><span>after it pauses and comes back</span></p>
@@ -703,79 +1035,92 @@ Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
         intend to.</p>
       <a class="src" href="https://arxiv.org/abs/2608.00101" rel="noopener noreferrer">Read the paper &rarr;</a>
     </div>
-
-    <div class="prose">
-      <p class="sec-lede sec-close">The cost of a miss grows with the conversation. Lose it
-        on turn three and you re-read a few thousand tokens. Lose it on turn thirty and you re-read
-        everything. So the waste lands exactly where it hurts most, on the longest and most valuable
-        tasks.</p>
-    </div>
   </section>
+
+  <figure class="reel fade">
+    <video src="hero.mp4" poster="hero-poster.jpg" width="1280" height="720"
+             autoplay muted loop playsinline disablepictureinpicture preload="metadata"></video>
+    <figcaption>
+      <span class="cap-title">Evolution of Technology</span>
+      <span class="cap-strip"><span>Apollo 11</span> <span class="dot" aria-hidden="true">·</span> <span>The chip</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaGo</span> <span class="dot" aria-hidden="true">·</span> <span>AlphaFold</span> <span class="dot" aria-hidden="true">·</span> <span>GPT</span> <span class="dot" aria-hidden="true">·</span> <span>Claude</span> <span class="dot" aria-hidden="true">·</span> <span>Agents</span></span>
+    </figcaption>
+  </figure>
 
   <section id="how" class="col sec fade">
     <div class="prose">
       <p class="sec-eyebrow">How we solve it</p>
-      <h2>Four things a serving layer built for chat will not do.</h2>
-      <p class="sec-lede">None of this is exotic. It is scheduling and routing,
-        done for a workload nobody designed for.</p>
     </div>
+    <ol class="steps">
+      <li>
+        <span class="step-n" aria-hidden="true">01</span>
+        <h3>We see the pause coming</h3>
+        <p>A tool call means a wait is starting. That&rsquo;s our signal.</p>
+      </li>
+      <li>
+        <span class="step-n" aria-hidden="true">02</span>
+        <h3>We hold its place</h3>
+        <p>Instead of losing the conversation, we set it aside.</p>
+      </li>
+      <li>
+        <span class="step-n" aria-hidden="true">03</span>
+        <h3>We hand it back</h3>
+        <p>It picks up where it stopped. No re-reading. No second bill.</p>
+      </li>
+    </ol>
+  </section>
 
-    <div class="cards cards-4">
-      <article class="card">
-        <h3>Know a pause is coming</h3>
-        <p>When an agent calls a tool, that is a signal. The gap is starting now and it will last minutes. We treat that as the moment to move the conversation's memory somewhere cheaper, deliberately, instead of waiting for the server to run out of room and guess.</p>
-      </article>
-      <article class="card">
-        <h3>Send it back where it came from</h3>
-        <p>When the agent returns, its memory sits on one specific machine. Standard routing sends the request to whichever machine is least busy, which is usually the wrong one. We route on where the conversation already lives, then on load.</p>
-      </article>
-      <article class="card">
-        <h3>Keep paused work, drop finished work</h3>
-        <p>A conversation that ended and one that is thinking look identical to most systems, so they clear whichever is older. That is backwards. A finished task will never return. A paused one returns in ninety seconds.</p>
-      </article>
-      <article class="card">
-        <h3>Move it or rebuild it, whichever is cheaper</h3>
-        <p>Sometimes the original machine is busy and the conversation has to go elsewhere. Moving its memory across the network costs something. Rebuilding it from scratch costs something else. Which is cheaper depends on how long the conversation is. We work it out per request instead of always rebuilding.</p>
-      </article>
+  <section id="pricing" class="sec fade">
+    <div class="price-card">
+      <picture class="price-bg" aria-hidden="true">
+        <!-- jpeg only: on this photograph every webp setting tried came out
+             larger than mozjpeg q68 (247KB vs 198KB), so a webp <source>
+             would have made it worse for the browsers that support it. -->
+        <img src="pricing-2-1280.jpg" srcset="pricing-2-780.jpg 780w, pricing-2-1280.jpg 1280w"
+             sizes="(max-width:1240px) 100vw, 1152px" width="1280" height="853"
+             alt="" loading="lazy" decoding="async">
+      </picture>
+      <div class="price-body">
+        <p class="sec-eyebrow">Pricing</p>
+        <h2 class="statement">Priced in rupees, per token.</h2>
+        <p class="sec-lede">Rate card after our first benchmark. We would rather leave it blank than invent it.</p>
+        <ul class="rates">
+      <li class="soon" tabindex="0" aria-describedby="soon-rate-1">
+        <span class="rate-n">Per token</span>
+        <span class="rate-d">Tiered by volume and by how long a request can wait</span>
+        <span class="soon-tip" id="soon-rate-1" role="tooltip">Coming soon</span>
+      </li>
+      <li class="soon" tabindex="0" aria-describedby="soon-rate-2">
+        <span class="rate-n">Per task</span>
+        <span class="rate-d">Priced on cache-hit improvement, not raw tokens</span>
+        <span class="soon-tip" id="soon-rate-2" role="tooltip">Coming soon</span>
+      </li>
+      <li class="soon" tabindex="0" aria-describedby="soon-rate-3">
+        <span class="rate-n">Per call</span>
+        <span class="rate-d">For Indic-heavy workloads, where tokens misrepresent cost</span>
+        <span class="soon-tip" id="soon-rate-3" role="tooltip">Coming soon</span>
+      </li>
+        </ul>
+      </div>
     </div>
   </section>
 
   <section id="india" class="col sec fade">
     <div class="prose">
       <p class="sec-eyebrow">Why India</p>
-      <h2>Three costs that only apply here.</h2>
-    </div>
-
-    <div class="cards">
-      <article class="card">
-        <h3>Paid in rupees</h3>
-        <p>Inference is billed in dollars by companies abroad, and Indian buyers pay 18% import tax on top. That is a cost that grows with every user you add, in a currency you don't earn.</p>
-      </article>
-      <article class="card">
-        <h3>Stays in India</h3>
-        <p>For most companies this doesn't matter. For banks, insurers and hospitals it decides the vendor. If your data has to stay inside the country, running the model here is not a preference.</p>
-      </article>
-      <article class="card">
-        <h3>Indian languages cost more</h3>
-        <p>Models chop Indian languages into four to five times more pieces than English, and Malayalam into far more than that. You are billed per piece. Choosing the right model for the language is a cost decision nobody abroad has a reason to make for you.</p>
-      </article>
-    </div>
-
-    <div class="prose s-building" id="about">
-      <h2>We're building, not selling.</h2>
-      <p class="p-narrow">Two founders in Bangalore. We have a gateway running &mdash; authentication,
-        routing, streaming, usage metering per request &mdash; serving open models end to end. It is early
-        and rough.</p>
-      <p class="p-narrow">What we don&rsquo;t have yet is the measurement. That comes next: how much Indian
-        agent workloads actually lose across the gaps, benchmarked on rented Indian GPUs, published with
-        the method so anyone can check it or disagree with it.</p>
-      <p class="p-narrow">If you're running agents in India and paying too much for them, we'd like to talk.
-        <strong>Not to sell you anything &mdash; to understand what actually hurts</strong>.</p>
-      <a class="chip" href="mailto:aryankumar@knotai.cloud">Email us</a>
+      <h2 class="statement">Cheaper machines. Billed in rupees, not dollars. And Indian languages cost
+        four times more to process than English &mdash; so we price them properly.</h2>
     </div>
   </section>
 
-  <hr class="rule">
+  <section class="col sec fade">
+    <div class="prose s-building" id="about">
+      <h2>We're building, not selling.</h2>
+      <p class="p-narrow">If you're running agents in India and paying too much for them, we'd like to talk.
+        <strong>Not to sell you anything &mdash; to understand what actually hurts</strong>.</p>
+      <p class="built-on">Built on vLLM, SGLang, LMCache and TensorRT-LLM.</p>
+      <a class="chip" href="mailto:aryankumar@knotai.cloud">Email us</a>
+    </div>
+  </section>
 
   <section id="models" class="models fade">
     <h2>Models we plan to serve.</h2>
@@ -790,17 +1135,22 @@ Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
     <p class="model-note">Need one that isn&rsquo;t here? Tell us and we&rsquo;ll look at serving it.</p>
   </section>
 
-  <hr class="rule">
-
-  <figure class="photo fade">
-    <img src="datacentre.jpg" alt="Aerial view of a datacentre campus at dusk" width="2400" height="1797" loading="lazy">
-  </figure>
-
 </main>
 
-<hr class="rule">
+<section class="closing fade">
+  <picture class="closing-bg" aria-hidden="true">
+    <source type="image/webp"
+            srcset="hero-2-780.webp 780w, hero-2-1280.webp 1280w, hero-2-1920.webp 1920w"
+            sizes="100vw">
+    <img src="hero-2-1280.jpg"
+         srcset="hero-2-780.jpg 780w, hero-2-1280.jpg 1280w, hero-2-1920.jpg 1920w"
+         sizes="100vw" width="1920" height="1080" alt="" loading="lazy" decoding="async">
+  </picture>
+  <div class="coda">
+    <p>Built for the work that pauses.</p>
+  </div>
 
-<div class="tail fade">
+  <div class="tail">
   <h2>Sign up for 'Notes' by Knot.ai</h2>
   <p class="tail-sub">Benchmarks, cost breakdowns, and what we learn running open models on Indian GPUs. Written for people who want the numbers, not the pitch.</p>
   <form class="signup" onsubmit="event.preventDefault();location.href='mailto:aryankumar@knotai.cloud?subject=Notes%20signup&amp;body='+encodeURIComponent(this.email.value)">
@@ -828,8 +1178,8 @@ Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
       </ul>
     </nav>
   </footer>
-</div>
-
+  </div>
+</section>
 
 <div class="modal" id="waitlist" hidden>
   <div class="modal-panel" role="dialog" aria-modal="true" aria-label="Join the waitlist">
@@ -884,77 +1234,6 @@ Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
   </div>
 </div>
 
-<script>
-/* Ambient dust field behind the hero copy. Canvas 2D, ~500 particles,
-   cursor repulsion with a spring back to the drift. Desktop only. */
-(function(){
-  var cv=document.getElementById('dust');
-  if(!cv||!cv.getContext) return;
-  var ctx=cv.getContext('2d'), hero=cv.parentNode;
-  var ps=[], w=0, h=0, raf=0, last=0, mx=-1e4, my=-1e4;
-  var R=100, FRAME=1000/60;                       // repel radius, 60fps cap
-  var wide=matchMedia('(min-width:900px)');
-  var still=matchMedia('(prefers-reduced-motion:reduce)');
-
-  function size(){
-    var r=hero.getBoundingClientRect(), dpr=Math.min(devicePixelRatio||1,2);
-    w=r.width; h=r.height;
-    cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    var n=Math.max(400,Math.min(600,Math.round(w*h/1500)));
-    ps.length=0;
-    for(var i=0;i<n;i++) ps.push({
-      x:Math.random()*w, y:Math.random()*h,
-      vx:(Math.random()-.5)*.28, vy:(Math.random()-.5)*.28,
-      r:.5+Math.random()*.6,                      // 1.0–2.2px across
-      ox:0, oy:0, ovx:0, ovy:0                    // cursor displacement
-    });
-  }
-
-  function step(now){
-    raf=requestAnimationFrame(step);
-    if(now-last<FRAME-1) return;                  // cap at 60fps
-    last=now;
-    ctx.clearRect(0,0,w,h);
-    ctx.fillStyle='rgba(0,0,0,.25)';
-    for(var i=0;i<ps.length;i++){
-      var p=ps[i];
-      p.x+=p.vx; p.y+=p.vy;
-      if(p.x<-2) p.x=w+2; else if(p.x>w+2) p.x=-2;
-      if(p.y<-2) p.y=h+2; else if(p.y>h+2) p.y=-2;
-      var dx=p.x+p.ox-mx, dy=p.y+p.oy-my, d2=dx*dx+dy*dy;
-      if(d2<R*R){                                 // push away from cursor
-        var d=Math.sqrt(d2)||.001, f=(1-d/R)*.75;
-        p.ovx+=dx/d*f; p.ovy+=dy/d*f;
-      }
-      p.ovx=(p.ovx-p.ox*.012)*.9;                 // spring back, damped
-      p.ovy=(p.ovy-p.oy*.012)*.9;
-      p.ox+=p.ovx; p.oy+=p.ovy;
-      ctx.beginPath();
-      ctx.arc(p.x+p.ox,p.y+p.oy,p.r,0,6.2832);
-      ctx.fill();
-    }
-  }
-
-  function stop(){ if(raf){cancelAnimationFrame(raf);raf=0;} ctx.clearRect(0,0,w,h); }
-  function sync(){
-    if(wide.matches&&!still.matches&&!document.hidden){
-      if(!raf){ size(); last=0; raf=requestAnimationFrame(step); }
-    } else stop();
-  }
-
-  addEventListener('pointermove',function(e){
-    var r=hero.getBoundingClientRect();
-    mx=e.clientX-r.left; my=e.clientY-r.top;
-  },{passive:true});
-  document.addEventListener('mouseleave',function(){ mx=my=-1e4; });
-  addEventListener('resize',function(){ if(raf) size(); },{passive:true});
-  document.addEventListener('visibilitychange',sync);
-  wide.addEventListener('change',sync);
-  still.addEventListener('change',sync);
-  sync();
-})();
-</script>
 <script>
 /* Two-step waitlist modal. Netlify Forms via fetch so the page never
    navigates; native constraint validation gates the submit event. */
@@ -1097,7 +1376,7 @@ Cal.ns["30min"]("preload", {calLink:"shivam-singh-krvlu4/30min"});
 /* "Book a call": the Cal modal can take a beat on a cold connection.
    Show the wait on the button instead of leaving it looking dead. */
 (function(){
-  var btn=document.querySelector('.nav .chip[data-cal-link]');
+  var btn=document.getElementById('book-a-call');
   if(!btn) return;
   var label=btn.textContent, timer=0, obs=null;
   function done(){

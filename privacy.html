@@ -28,6 +28,7 @@
   --grey-foot:#8D8D8D;
   --grey-link:#474747;
   --hair:#ECEAE5;
+  --green:#2B6B47;
   --nav-l:77px;
   --nav-r:83px;
   --fs-nav:17px;
@@ -53,7 +54,7 @@ a{color:inherit}
 .brand img{width:40px;height:40px}
 .brand span{font-size:27px;font-weight:700;letter-spacing:-.037em;color:var(--ink)}
 .back{margin-right:var(--nav-r);color:var(--grey-nav);text-decoration:none;font-size:var(--fs-nav);white-space:nowrap}
-.back:hover{color:var(--ink)}
+.back:hover{color:var(--green)}
 
 .doc{max-width:720px;margin:0 auto;padding:72px 20px 0}
 h1{margin:0;font-size:clamp(28px,2.667vw + 17.6px,40px);font-weight:400;line-height:1.1;letter-spacing:-.02em;color:var(--ink)}
@@ -67,9 +68,10 @@ h2{margin:52px 0 0;font-size:21px;font-weight:700;line-height:1.2;letter-spacing
 .doc p{margin:14px 0 0;font-size:17px;line-height:1.6}
 .doc ul{margin:14px 0 0;padding-left:22px}
 .doc li{margin-top:8px;font-size:17px;line-height:1.6}
+.doc li::marker{color:var(--green)}
 .doc strong{color:var(--ink)}
 .doc a{color:var(--grey-link);text-decoration:underline;text-underline-offset:2px}
-.doc a:hover{color:var(--ink)}
+.doc a:hover{color:var(--green)}
 
 .note{
   margin:20px 0 0;background:var(--bg-alt);border-radius:12px;padding:20px 22px;
@@ -83,7 +85,7 @@ h2{margin:52px 0 0;font-size:21px;font-weight:700;line-height:1.2;letter-spacing
   font-size:var(--fs-mono);color:var(--grey-foot);
 }
 
-:where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+:where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--green);outline-offset:2px}
 ::selection{background:#EAE7E1;color:var(--ink)}
 
 @media (pointer:coarse){.back,.doc a{display:inline-block;padding-block:4px}}
